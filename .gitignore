@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Next.js & Web builds
+.next/
+out/
+build/
+dist/
+.vercel
+
+# Expo & Mobile
+.expo/
+web-build/
+expo-env.d.ts
+.kotlin/
+/frontend-mobile/ios
+/frontend-mobile/android
+
+# Native keys & certs
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+*.orig.*
+
+# Cache & Logs
+.metro-health-check*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Testing & Coverage
+coverage/
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo

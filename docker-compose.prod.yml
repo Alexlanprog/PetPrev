@@ -1,0 +1,130 @@
+services:
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: petprev_postgres_prod
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - petprev_pgdata_prod:/var/lib/postgresql/data
+      - ./docker/postgres/01-init-postgis.sql:/docker-entrypoint-initdb.d/01-init-postgis.sql
+    restart: always
+    networks:
+      - petprev_net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: petprev_redis_prod
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - petprev_redis_data_prod:/data
+    restart: always
+    networks:
+      - petprev_net
+
+  minio:
+    image: minio/minio:RELEASE.2023-11-20T22-40-07Z
+    container_name: petprev_minio_prod
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - petprev_minio_data_prod:/data
+    restart: always
+    networks:
+      - petprev_net
+
+  minio_create_buckets:
+    image: minio/mc
+    container_name: petprev_minio_setup_prod
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      mc mb myminio/${MINIO_BUCKET_COLDCHAIN} || true;
+      mc mb myminio/${MINIO_BUCKET_RECORDS} || true;
+      mc mb myminio/${MINIO_BUCKET_CARTEIRAS} || true;
+      mc mb myminio/${MINIO_BUCKET_AVATARS} || true;
+      mc anonymous set public myminio/${MINIO_BUCKET_AVATARS} || true;
+      exit 0;
+      "
+    networks:
+      - petprev_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: petprev_backend_prod
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_PORT=9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_USE_SSL=false
+      - MINIO_PUBLIC_URL=https://api.petprev.com.br/storage
+      - MINIO_BUCKET_COLDCHAIN=${MINIO_BUCKET_COLDCHAIN}
+      - MINIO_BUCKET_RECORDS=${MINIO_BUCKET_RECORDS}
+      - MINIO_BUCKET_CARTEIRAS=${MINIO_BUCKET_CARTEIRAS}
+      - MINIO_BUCKET_AVATARS=${MINIO_BUCKET_AVATARS}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+    restart: always
+    networks:
+      - petprev_net
+
+  frontend_web:
+    build:
+      context: ./frontend-web
+    container_name: petprev_frontend_prod
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.petprev.com.br/api/v1
+    restart: always
+    networks:
+      - petprev_net
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: petprev_nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend_web
+    restart: always
+    networks:
+      - petprev_net
+
+volumes:
+  petprev_pgdata_prod:
+  petprev_redis_data_prod:
+  petprev_minio_data_prod:
+
+networks:
+  petprev_net:
+    driver: bridge
