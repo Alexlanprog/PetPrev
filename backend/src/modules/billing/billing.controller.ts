@@ -1,10 +1,11 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Param, UseGuards } from '@nestjs/common';
-import { SubscriptionsService, AsaasWebhookPayload } from './services/subscriptions.service';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Param, UseGuards } from '@nestjs/common';
+import { SubscriptionsService, AsaasWebhookPayload, CreateSubscriptionDto } from './services/subscriptions.service';
 import { VetPayoutEngineService } from './services/vet-payout-engine.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RBACGuard } from '../../common/guards/rbac.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../database/enums';
+import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 
 @Controller('billing')
 export class BillingController {
@@ -14,21 +15,38 @@ export class BillingController {
   ) {}
 
   /**
+   * Inicia ou altera a assinatura do plano para o tutor autenticado
+   */
+  @Post('subscriptions')
+  @UseGuards(JwtAuthGuard)
+  async createSubscription(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: CreateSubscriptionDto,
+  ) {
+    return await this.subscriptionsService.createSubscription(user.userId, dto);
+  }
+
+  /**
+   * Consulta o plano e status de assinatura do tutor autenticado
+   */
+  @Get('subscriptions/me')
+  @UseGuards(JwtAuthGuard)
+  async getMySubscription(@CurrentUser() user: CurrentUserPayload) {
+    return await this.subscriptionsService.getTutorSubscription(user.userId);
+  }
+
+  /**
    * Recebe webhooks do Asaas para gerenciar o ciclo de vida da assinatura.
-   * Em produção, deve haver verificação de assinatura/token no header para garantir origem.
    */
   @Post('webhooks/gateway')
   @HttpCode(HttpStatus.OK)
   async handleGatewayWebhook(@Body() payload: AsaasWebhookPayload) {
-    // Retorna OK rapidamente e processa o webhook
     await this.subscriptionsService.processWebhook(payload);
     return { received: true };
   }
 
   /**
-   * Endpoint de testes/homologação ou acionado por um cron interno 
-   * para forçar a geração de repasse de um agendamento já concluído.
-   * Protegido para Administradores.
+   * Endpoint de testes/homologação para forçar a geração de repasse de um agendamento já concluído.
    */
   @Post('payouts/calculate/:appointmentId')
   @UseGuards(JwtAuthGuard, RBACGuard)

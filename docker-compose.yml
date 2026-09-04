@@ -181,6 +181,9 @@ services:
       OTP_TTL_SECONDS: ${OTP_TTL_SECONDS:-180}
       OTP_COOLDOWN_SECONDS: ${OTP_COOLDOWN_SECONDS:-60}
       OTP_MAX_ATTEMPTS: ${OTP_MAX_ATTEMPTS:-3}
+      LIVEKIT_HOST: ${LIVEKIT_HOST:-http://livekit:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
     ports:
       - "3000:3000"
     depends_on:
@@ -190,5 +193,21 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    networks:
+      - petprev-network
+
+  # ----------------------------------------------------------------------------
+  # 7. SERVIDOR WEBRTC LIVEKIT (TELEORIENTAÇÃO)
+  # ----------------------------------------------------------------------------
+  livekit:
+    image: livekit/livekit-server:v1.6
+    container_name: petprev_livekit
+    restart: unless-stopped
+    command: --dev
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-secret}"
     networks:
       - petprev-network

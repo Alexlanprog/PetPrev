@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import { pets as seedPets, clinicalHistory, type Pet } from "@/lib/tutor-data";
 
+import { useEffect } from "react";
+import { mobileApi } from "@/lib/api-client";
+
 export const Route = createFileRoute("/tutor/pets")({
   head: () => ({
     meta: [
@@ -40,27 +43,75 @@ function MyPets() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", breed: "", age: "", weight: "" });
 
-  const addPet = () => {
+  useEffect(() => {
+    let isMounted = true;
+    mobileApi
+      .getPets()
+      .then((serverPets: any[]) => {
+        if (isMounted && Array.isArray(serverPets) && serverPets.length > 0) {
+          const mapped: Pet[] = serverPets.map((p) => ({
+            id: p.id,
+            name: p.name,
+            species: p.species === "FELINE" ? "Gato" : "Cão",
+            breed: p.breed || "Sem raça definida",
+            age: p.birth_date
+              ? `${new Date().getFullYear() - new Date(p.birth_date).getFullYear()} anos`
+              : "—",
+            weight: p.weight_kg ? `${p.weight_kg} kg` : "—",
+            emoji: p.species === "FELINE" ? "🐈" : "🐕",
+            vaccinesUpToDate: true,
+          }));
+          setPets(mapped);
+        }
+      })
+      .catch(() => {
+        // Fallback para dados locais
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const addPet = async () => {
     if (!form.name.trim()) {
       toast.error("Informe o nome do pet.");
       return;
     }
-    setPets((prev) => [
-      ...prev,
-      {
-        id: `p${prev.length + 1}`,
+
+    const newPetLocal: Pet = {
+      id: `p${pets.length + 1}`,
+      name: form.name,
+      species: "Cão",
+      breed: form.breed || "Sem raça definida",
+      age: form.age || "—",
+      weight: form.weight || "—",
+      emoji: "🐾",
+      vaccinesUpToDate: false,
+    };
+
+    setPets((prev) => [...prev, newPetLocal]);
+
+    // Enviar para o backend se disponível
+    try {
+      const weightNum = parseFloat(form.weight.replace(",", "."));
+      const petPayload: Parameters<typeof mobileApi.createPet>[0] = {
         name: form.name,
-        species: "Cão",
-        breed: form.breed || "Sem raça definida",
-        age: form.age || "—",
-        weight: form.weight || "—",
-        emoji: "🐾",
-        vaccinesUpToDate: false,
-      },
-    ]);
+        species: "CANINE",
+        breed: form.breed || "SRD",
+        gender: "M",
+        birth_date: new Date().toISOString().split("T")[0],
+      };
+      if (!isNaN(weightNum)) {
+        petPayload.weight_kg = weightNum;
+      }
+      await mobileApi.createPet(petPayload);
+      toast.success("Pet cadastrado e sincronizado!");
+    } catch {
+      toast.success("Pet salvo localmente (modo offline).");
+    }
+
     setForm({ name: "", breed: "", age: "", weight: "" });
     setOpen(false);
-    toast.success("Pet cadastrado com sucesso.");
   };
 
   return (

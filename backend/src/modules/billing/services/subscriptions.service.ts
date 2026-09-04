@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SubscriptionEntity } from '../../../database/entities/subscription.entity';
+import { TutorEntity } from '../../../database/entities/tutor.entity';
 import { SubscriptionStatus } from '../../../database/enums';
 import { AuditLogEntity } from '../../../database/entities/audit-log.entity';
 
@@ -15,6 +16,11 @@ export interface AsaasWebhookPayload {
   };
 }
 
+export interface CreateSubscriptionDto {
+  plan_type: string;
+  monthly_price?: number;
+}
+
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
@@ -22,9 +28,84 @@ export class SubscriptionsService {
   constructor(
     @InjectRepository(SubscriptionEntity)
     private readonly subscriptionRepository: Repository<SubscriptionEntity>,
+    @InjectRepository(TutorEntity)
+    private readonly tutorRepository: Repository<TutorEntity>,
     @InjectRepository(AuditLogEntity)
     private readonly auditLogRepository: Repository<AuditLogEntity>,
   ) {}
+
+  /**
+   * Inicia ou atualiza a assinatura de um plano para o tutor autenticado
+   */
+  async createSubscription(userId: string, dto: CreateSubscriptionDto): Promise<SubscriptionEntity> {
+    let tutor = await this.tutorRepository.findOne({ where: { user_id: userId } });
+    if (!tutor) {
+      tutor = this.tutorRepository.create({
+        user_id: userId,
+        full_name: 'Tutor PetPrev',
+        address_street: 'Não informado',
+        address_number: 'S/N',
+        address_neighborhood: 'Centro',
+        address_city: 'Salvador',
+        address_zipcode: '40000-000',
+        h3_index_res8: '882a1072b5fffff',
+      });
+      tutor = await this.tutorRepository.save(tutor);
+    }
+
+    let price = dto.monthly_price;
+    if (!price) {
+      const type = (dto.plan_type || '').toUpperCase();
+      if (type.includes('ESSENCIAL')) price = 99.90;
+      else if (type.includes('PREMIUM')) price = 199.90;
+      else price = 149.90; // Padrão Família
+    }
+
+    const today = new Date();
+    const periodEnd = new Date(today);
+    periodEnd.setDate(periodEnd.getDate() + 30);
+
+    const loyaltyEnd = new Date(today);
+    loyaltyEnd.setDate(loyaltyEnd.getDate() + 365);
+
+    let subscription = await this.subscriptionRepository.findOne({
+      where: { tutor_id: tutor.id, status: SubscriptionStatus.ACTIVE },
+    });
+
+    if (subscription) {
+      subscription.plan_type = dto.plan_type;
+      subscription.monthly_price = price;
+      subscription.current_period_end = periodEnd.toISOString().split('T')[0];
+    } else {
+      subscription = this.subscriptionRepository.create({
+        tutor_id: tutor.id,
+        plan_type: dto.plan_type,
+        monthly_price: price,
+        status: SubscriptionStatus.ACTIVE,
+        gateway_subscription_id: `sub_sim_${Date.now()}`,
+        current_period_start: today.toISOString().split('T')[0],
+        current_period_end: periodEnd.toISOString().split('T')[0],
+        loyalty_end_date: loyaltyEnd.toISOString().split('T')[0],
+      });
+    }
+
+    const saved = await this.subscriptionRepository.save(subscription);
+    this.logger.log(`Assinatura ativada com sucesso: ${saved.id} (Plano: ${saved.plan_type})`);
+    return saved;
+  }
+
+  /**
+   * Retorna a assinatura ativa do tutor autenticado
+   */
+  async getTutorSubscription(userId: string): Promise<SubscriptionEntity | null> {
+    const tutor = await this.tutorRepository.findOne({ where: { user_id: userId } });
+    if (!tutor) return null;
+
+    return await this.subscriptionRepository.findOne({
+      where: { tutor_id: tutor.id, status: SubscriptionStatus.ACTIVE },
+      order: { created_at: 'DESC' },
+    });
+  }
 
   /**
    * Processa o webhook de pagamentos do Asaas (ou simular)
@@ -80,7 +161,7 @@ export class SubscriptionsService {
           action: 'SUBSCRIPTION_STATUS_CHANGED',
           entity_name: 'subscriptions',
           entity_id: subscription.id,
-          ip_address: '0.0.0.0', // Origin IP could be passed from controller
+          ip_address: '0.0.0.0',
           metadata_json: {
             previous_status: previousStatus,
             new_status: newStatus,

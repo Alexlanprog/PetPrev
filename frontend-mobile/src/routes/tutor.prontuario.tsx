@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { pets, vaccines, prescriptions, clinicalHistory, petById } from "@/lib/tutor-data";
 import { printDocument } from "@/lib/print-pdf";
 
+import { useEffect } from "react";
+import { mobileApi } from "@/lib/api-client";
+
 export const Route = createFileRoute("/tutor/prontuario")({
   head: () => ({
     meta: [
@@ -27,14 +30,49 @@ export const Route = createFileRoute("/tutor/prontuario")({
 
 function Prontuario() {
   const [petId, setPetId] = useState(pets[0]!.id);
-  const pet = petById(petId)!;
+  const [vaccinesList, setVaccinesList] = useState(vaccines);
+  const pet = petById(petId) || pets[0]!;
+
+  useEffect(() => {
+    let isMounted = true;
+    mobileApi
+      .getMedicalRecordsByPet(petId)
+      .then((records: any[]) => {
+        if (isMounted && Array.isArray(records) && records.length > 0) {
+          const mappedVaccines = records
+            .filter((r) => r.vaccine_lot_applied)
+            .map((r, idx) => ({
+              id: `v_real_${r.id || idx}`,
+              petId: petId,
+              name: r.vaccine_lot_applied.split("-")[0] || "Imunização Essencial",
+              appliedAt: r.vet_signed_at
+                ? new Date(r.vet_signed_at).toLocaleDateString("pt-BR")
+                : "Data registrada",
+              nextDose: "Em 1 ano",
+              lot: r.vaccine_lot_applied,
+              vet: r.veterinarian?.full_name || "Veterinário PetPrev",
+            }));
+          if (mappedVaccines.length > 0) {
+            setVaccinesList(mappedVaccines);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback para lista seed
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [petId]);
 
   const downloadPrescription = (id: string) => {
     const rx = prescriptions.find((p) => p.id === id)!;
     const rows = rx.items
       .map((i) => `<tr><td>${i.drug}</td><td>${i.dosage}</td><td>${i.duration}</td></tr>`)
       .join("");
-    printDocument(`Receita ${pet.name} ${rx.date}`, `
+    printDocument(
+      `Receita ${pet.name} ${rx.date}`,
+      `
       <h1>Receituário Veterinário</h1>
       <p class="muted">VetCampo · Atendimento domiciliar</p>
       <p><strong>Paciente:</strong> ${pet.name} (${pet.species}, ${pet.breed})<br/>
@@ -43,7 +81,8 @@ function Prontuario() {
       <table><thead><tr><th>Medicamento</th><th>Posologia</th><th>Duração</th></tr></thead>
       <tbody>${rows}</tbody></table>
       <footer>${rx.vet} — ${rx.crmv}</footer>
-    `);
+    `,
+    );
   };
 
   return (
@@ -80,7 +119,7 @@ function Prontuario() {
         </TabsList>
 
         <TabsContent value="vacinas" className="space-y-2 pt-4">
-          {vaccines
+          {vaccinesList
             .filter((v) => v.petId === petId)
             .map((v) => (
               <div
@@ -106,7 +145,9 @@ function Prontuario() {
             variant="secondary"
             className="w-full gap-2"
             onClick={() =>
-              printDocument(`Carteira de vacinacao ${pet.name}`, `
+              printDocument(
+                `Carteira de vacinacao ${pet.name}`,
+                `
                 <h1>Carteira de Vacinação Digital</h1>
                 <p class="muted">${pet.name} · ${pet.breed}</p>
                 <table><thead><tr><th>Vacina</th><th>Aplicação</th><th>Próxima dose</th><th>Lote</th></tr></thead><tbody>
@@ -118,7 +159,8 @@ function Prontuario() {
                   )
                   .join("")}
                 </tbody></table><footer>VetCampo · documento gerado pelo app do tutor</footer>
-              `)
+              `,
+              )
             }
           >
             <Download className="size-4" /> Baixar carteira em PDF

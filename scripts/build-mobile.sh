@@ -1,46 +1,33 @@
 #!/bin/bash
 
 # ==============================================================================
-# Script de Preparação / Instruções de Build Mobile - PetPrev (EAS)
-# Utilizando o Expo Application Services (EAS) para compilar os binários.
+# Script de Build do App Mobile PetPrev (PWA Web Responsivo / Capacitor)
 # ==============================================================================
 
-echo "📱 Iniciando preparação para o Build do App Mobile PetPrev"
-echo "Certifique-se de estar logado na sua conta Expo antes de prosseguir."
+echo "📱 Iniciando preparação e build do App Mobile PetPrev"
 echo "--------------------------------------------------------"
 
-cd frontend-mobile || { echo "Pasta frontend-mobile não encontrada"; exit 1; }
+cd frontend-mobile || { echo "❌ Pasta frontend-mobile não encontrada"; exit 1; }
 
-echo "[1/4] Verificando dependências EAS CLI..."
-if ! command -v eas &> /dev/null
-then
-    echo "⚠️ EAS CLI não encontrado. Instalando globalmente..."
-    npm install -g eas-cli
-else
-    echo "✅ EAS CLI já instalado."
+echo "[1/3] Verificando dependências locais..."
+if [ ! -d "node_modules" ]; then
+    echo "Instalando dependências via npm..."
+    npm install
 fi
 
-echo "[2/4] Verificando login no Expo..."
-eas whoami || {
-    echo "❌ Você não está logado no Expo. Por favor, execute:"
-    echo "eas login"
-    exit 1
-}
-
-echo "[3/4] Instalando pacotes internos do React Native..."
-npm install
-
-# Aqui poderíamos injetar as variáveis de ambiente baseadas em build profiles (eas.json)
-# Ex: EXPO_PUBLIC_API_URL=https://api.petprev.com.br/api/v1
+echo "[2/3] Compilando a distribuição Web SPA / PWA..."
+npm run build
 
 echo "========================================================"
-echo "🚀 TUDO PRONTO PARA COMPILAÇÃO NAS NUVENS!"
+echo "✅ Build PWA Web concluído com sucesso em .output!"
 echo "========================================================"
-echo "Para gerar o arquivo APK/AAB para Android (Play Store), execute:"
-echo "   cd frontend-mobile && eas build --platform android --profile production"
+echo "Para rodar em modo pré-visualização local:"
+echo "   npm run preview"
 echo ""
-echo "Para gerar o IPA para iOS (App Store / TestFlight), execute:"
-echo "   cd frontend-mobile && eas build --platform ios --profile production"
+echo "📱 Para empacotar como aplicativo nativo Android (APK/AAB) ou iOS via Capacitor:"
+echo "   1. npx cap init \"PetPrev Mobile\" \"br.com.petprev.app\" --web-dir .output/public"
+echo "   2. npx cap add android && npx cap add ios"
+echo "   3. npx cap sync"
+echo "   4. npx cap open android (abre no Android Studio para gerar o APK)"
 echo "========================================================"
-echo "Dica: Os binários compilados serão disponibilizados em link na sua conta do Expo Dev."
 exit 0

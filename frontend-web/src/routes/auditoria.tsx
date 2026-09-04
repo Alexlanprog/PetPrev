@@ -17,7 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { prontuarios, protocolos, type Prontuario } from "@/lib/petprev-data";
+import { prontuarios as seedProntuarios, protocolos, type Prontuario } from "@/lib/petprev-data";
+import { adminApi } from "@/lib/api-client";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/auditoria")({
   component: Auditoria,
@@ -42,8 +44,7 @@ const LIMITE_MIN = 2;
 const LIMITE_MAX = 8;
 
 function travaBadge(p: Prontuario) {
-  if (p.travaTermica === "violada")
-    return <Badge variant="destructive">Trava violada</Badge>;
+  if (p.travaTermica === "violada") return <Badge variant="destructive">Trava violada</Badge>;
   if (p.travaTermica === "alerta")
     return (
       <Badge variant="outline" className="border-chart-5 text-chart-5">
@@ -58,12 +59,46 @@ function travaBadge(p: Prontuario) {
 }
 
 function Auditoria() {
+  const [prontuariosList, setProntuariosList] = useState<Prontuario[]>(seedProntuarios);
   const [somenteConflito, setSomenteConflito] = useState(true);
   const [decisoes, setDecisoes] = useState<Record<string, "aprovado" | "reprovado">>({});
 
+  useEffect(() => {
+    let isMounted = true;
+    adminApi
+      .getMedicalRecords()
+      .then((records: any[]) => {
+        if (isMounted && Array.isArray(records) && records.length > 0) {
+          const mapped: Prontuario[] = records.map((r: any) => ({
+            id: r.id ? `PRT-${r.id.slice(0, 5).toUpperCase()}` : "PRT-DEV",
+            pet: r.pet?.name || "Paciente PetPrev",
+            tutor: r.pet?.tutor?.full_name || "Tutor Cadastrado",
+            clinica: "Atendimento Domiciliar",
+            data: r.created_at || new Date().toISOString(),
+            rt: r.veterinarian?.full_name || "Dr(a). Veterinário(a)",
+            has_conflict: Boolean(r.has_conflict),
+            motivo: r.has_conflict
+              ? r.clinical_notes || "Divergência detectada pelo sistema"
+              : null,
+            travaTermica: "ok",
+            tempMin: 3.2,
+            tempMax: 6.9,
+            status: "pendente",
+          }));
+          setProntuariosList((prev) => [...mapped, ...prev]);
+        }
+      })
+      .catch(() => {
+        // Fallback gracioso para os dados mock já carregados
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const lista = useMemo(
-    () => (somenteConflito ? prontuarios.filter((p) => p.has_conflict) : prontuarios),
-    [somenteConflito],
+    () => (somenteConflito ? prontuariosList.filter((p) => p.has_conflict) : prontuariosList),
+    [somenteConflito, prontuariosList],
   );
 
   const decidir = (id: string, decisao: "aprovado" | "reprovado") => {
@@ -88,9 +123,7 @@ function Auditoria() {
         <TabsContent value="prontuarios" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">
-                Prontuários ({lista.length})
-              </CardTitle>
+              <CardTitle className="text-base">Prontuários ({lista.length})</CardTitle>
               <div className="flex items-center gap-2">
                 <Switch
                   id="conflito"
@@ -175,7 +208,7 @@ function Auditoria() {
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2">
-              {prontuarios.map((p) => {
+              {prontuariosList.map((p) => {
                 const violada = p.tempMin < LIMITE_MIN || p.tempMax > LIMITE_MAX;
                 return (
                   <div key={p.id} className="rounded-xl border border-border bg-card p-4">
@@ -195,9 +228,7 @@ function Auditoria() {
                     </div>
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                       <div
-                        className={
-                          violada ? "h-full bg-destructive" : "h-full bg-chart-2"
-                        }
+                        className={violada ? "h-full bg-destructive" : "h-full bg-chart-2"}
                         style={{
                           width: `${Math.min(100, (p.tempMax / 12) * 100)}%`,
                         }}

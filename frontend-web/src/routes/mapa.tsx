@@ -121,8 +121,7 @@ function Mapa() {
               <p className="text-xs text-muted-foreground">
                 Participação na rede:{" "}
                 {(
-                  (ativa.atendimentos /
-                    celulasH3.reduce((s, c) => s + c.atendimentos, 0)) *
+                  (ativa.atendimentos / celulasH3.reduce((s, c) => s + c.atendimentos, 0)) *
                   100
                 ).toFixed(1)}
                 %

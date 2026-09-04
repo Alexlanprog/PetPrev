@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionsService, AsaasWebhookPayload } from '../services/subscriptions.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SubscriptionEntity } from '../../../database/entities/subscription.entity';
+import { TutorEntity } from '../../../database/entities/tutor.entity';
 import { SubscriptionStatus } from '../../../database/enums';
 import { AuditLogEntity } from '../../../database/entities/audit-log.entity';
 import { NotFoundException } from '@nestjs/common';
@@ -11,6 +12,13 @@ describe('SubscriptionsService', () => {
   
   const mockSubscriptionRepository = {
     findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockTutorRepository = {
+    findOne: jest.fn(),
+    create: jest.fn(),
     save: jest.fn(),
   };
 
@@ -25,6 +33,7 @@ describe('SubscriptionsService', () => {
       providers: [
         SubscriptionsService,
         { provide: getRepositoryToken(SubscriptionEntity), useValue: mockSubscriptionRepository },
+        { provide: getRepositoryToken(TutorEntity), useValue: mockTutorRepository },
         { provide: getRepositoryToken(AuditLogEntity), useValue: mockAuditLogRepository },
       ],
     }).compile();

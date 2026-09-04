@@ -20,6 +20,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { useEffect } from "react";
+import { mobileApi } from "@/lib/api-client";
+
 export const Route = createFileRoute("/tutor/assinatura")({
   head: () => ({
     meta: [
@@ -48,6 +51,36 @@ const benefits = [
 
 function Assinatura() {
   const [open, setOpen] = useState(false);
+  const [planData, setPlanData] = useState({
+    name: "PetPrev Essencial",
+    price: "R$ 149,90/mês",
+    renewal: "renova no dia 12",
+    status: "ACTIVE",
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    mobileApi
+      .getSubscription()
+      .then((sub) => {
+        if (isMounted && sub && sub.plan_type) {
+          setPlanData({
+            name: `PetPrev ${sub.plan_type}`,
+            price: sub.monthly_price ? `R$ ${sub.monthly_price}/mês` : "R$ 149,90/mês",
+            renewal: sub.current_period_end
+              ? `renova em ${new Date(sub.current_period_end).toLocaleDateString("pt-BR")}`
+              : "renova no dia 12",
+            status: sub.status || "ACTIVE",
+          });
+        }
+      })
+      .catch(() => {
+        // Mantém fallback de demonstração
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <main className="space-y-5 px-4 pt-8">
@@ -57,9 +90,16 @@ function Assinatura() {
       </header>
 
       <section className="rounded-2xl bg-primary p-5 text-primary-foreground shadow-[var(--shadow-card)]">
-        <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Plano atual</p>
-        <p className="mt-1 text-xl font-bold">VetCampo Família</p>
-        <p className="text-sm opacity-90">R$ 149,90/mês · renova em 12/09/2026</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Plano atual</p>
+          <span className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[11px] font-medium">
+            {planData.status === "ACTIVE" ? "Ativo" : planData.status}
+          </span>
+        </div>
+        <p className="mt-1 text-xl font-bold">{planData.name}</p>
+        <p className="text-sm opacity-90">
+          {planData.price} · {planData.renewal}
+        </p>
         <ul className="mt-4 space-y-1 text-sm">
           {benefits.map((b) => (
             <li key={b} className="flex items-center gap-2">
@@ -91,7 +131,11 @@ function Assinatura() {
             <p className="text-sm font-semibold">Última fatura · 12/08/2026</p>
             <p className="text-xs text-muted-foreground">R$ 149,90 · paga</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => toast.success("Fatura enviada por e-mail.")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => toast.success("Fatura enviada por e-mail.")}
+          >
             Ver
           </Button>
         </div>
@@ -142,7 +186,11 @@ function Assinatura() {
 
       <section className="space-y-3">
         <h2 className="field-label">Ajuda</h2>
-        <Accordion type="single" collapsible className="rounded-2xl border border-border bg-card px-4">
+        <Accordion
+          type="single"
+          collapsible
+          className="rounded-2xl border border-border bg-card px-4"
+        >
           <AccordionItem value="a">
             <AccordionTrigger>Como remarcar uma visita?</AccordionTrigger>
             <AccordionContent>

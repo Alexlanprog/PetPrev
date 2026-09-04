@@ -95,10 +95,15 @@ services:
   frontend_web:
     build:
       context: ./frontend-web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://api.petprev.com.br/api/v1
     container_name: petprev_frontend_prod
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=https://api.petprev.com.br/api/v1
+      - HOST=0.0.0.0
+      - PORT=3000
+      - VITE_API_BASE_URL=https://api.petprev.com.br/api/v1
     restart: always
     networks:
       - petprev_net

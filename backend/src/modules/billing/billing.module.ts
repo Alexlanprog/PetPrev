@@ -7,6 +7,7 @@ import { SubscriptionEntity } from '../../database/entities/subscription.entity'
 import { AuditLogEntity } from '../../database/entities/audit-log.entity';
 import { AppointmentEntity } from '../../database/entities/appointment.entity';
 import { VetPayoutEntity } from '../../database/entities/vet-payout.entity';
+import { TutorEntity } from '../../database/entities/tutor.entity';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { VetPayoutEntity } from '../../database/entities/vet-payout.entity';
       AuditLogEntity,
       AppointmentEntity,
       VetPayoutEntity,
+      TutorEntity,
     ]),
   ],
   controllers: [BillingController],

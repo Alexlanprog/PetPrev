@@ -10,6 +10,9 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { MedicalRecordsModule } from './modules/medical-records/medical-records.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
+import { PetsModule } from './modules/pets/pets.module';
+import { TutorsModule } from './modules/tutors/tutors.module';
+import { DevModule } from './modules/dev/dev.module';
 import { BullModule } from '@nestjs/bullmq';
 
 @Controller()
@@ -55,6 +58,9 @@ export class AppController {
     MedicalRecordsModule,
     BillingModule,
     CommunicationsModule,
+    PetsModule,
+    TutorsModule,
+    DevModule,
   ],
   controllers: [AppController],
   providers: [],

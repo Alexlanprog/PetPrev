@@ -14,7 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { visits, petById } from "@/lib/tutor-data";
+import { visits as seedVisits, petById, type Visit } from "@/lib/tutor-data";
+import { useEffect } from "react";
+import { mobileApi } from "@/lib/api-client";
 
 export const Route = createFileRoute("/tutor/agenda")({
   head: () => ({
@@ -49,7 +51,83 @@ const statusLabel: Record<string, string> = {
 
 function Agenda() {
   const [open, setOpen] = useState(false);
-  const tracking = visits.find((v) => v.status === "a_caminho");
+  const [visitsList, setVisitsList] = useState<Visit[]>(seedVisits);
+  const [scheduleForm, setScheduleForm] = useState({
+    date: "",
+    period: "Manhã",
+    reason: "",
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    mobileApi
+      .getAppointments()
+      .then((serverAppointments: any[]) => {
+        if (isMounted && Array.isArray(serverAppointments) && serverAppointments.length > 0) {
+          const mapped: Visit[] = serverAppointments.map((a) => {
+            let st: "agendada" | "a_caminho" | "concluida" = "agendada";
+            if (a.status === "EN_ROUTE") st = "a_caminho";
+            else if (a.status === "COMPLETED") st = "concluida";
+
+            return {
+              id: a.id,
+              petId: a.pet_id,
+              date: a.scheduled_date
+                ? new Date(a.scheduled_date).toLocaleDateString("pt-BR")
+                : "Hoje",
+              time: a.time_window_start
+                ? `${a.time_window_start.slice(0, 5)} - ${a.time_window_end?.slice(0, 5)}`
+                : "Horário a definir",
+              reason: a.pet?.name ? `Atendimento para ${a.pet.name}` : "Consulta preventiva",
+              vet: a.veterinarian?.full_name || "Veterinário a caminho",
+              status: st,
+            };
+          });
+          setVisitsList(mapped);
+        }
+      })
+      .catch(() => {
+        // Fallback para lista seed
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleRequestAppointment = async () => {
+    if (!scheduleForm.date) {
+      toast.error("Por favor, selecione a data.");
+      return;
+    }
+
+    const newVisitLocal: Visit = {
+      id: `a${visitsList.length + 1}`,
+      petId: "p1",
+      date: scheduleForm.date,
+      time: scheduleForm.period === "Tarde" ? "14:00 - 18:00" : "08:00 - 12:00",
+      reason: scheduleForm.reason || "Visita de rotina",
+      vet: "Aguardando confirmação",
+      status: "agendada",
+    };
+
+    setVisitsList((prev) => [newVisitLocal, ...prev]);
+
+    try {
+      await mobileApi.requestAppointment({
+        pet_id: "00000000-0000-0000-0000-000000000000",
+        scheduled_date: scheduleForm.date,
+        time_window_start: scheduleForm.period === "Tarde" ? "14:00:00" : "08:00:00",
+        time_window_end: scheduleForm.period === "Tarde" ? "18:00:00" : "12:00:00",
+      });
+      toast.success("Solicitação enviada e registrada no servidor!");
+    } catch {
+      toast.success("Solicitação registrada localmente (modo offline).");
+    }
+
+    setOpen(false);
+  };
+
+  const tracking = visitsList.find((v) => v.status === "a_caminho");
 
   return (
     <main className="space-y-5 px-4 pt-8">
@@ -126,7 +204,7 @@ function Agenda() {
       <section className="space-y-3">
         <h2 className="field-label">Histórico de visitas</h2>
         <ul className="space-y-2">
-          {visits.map((visit) => (
+          {visitsList.map((visit) => (
             <li
               key={visit.id}
               className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4"

@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MapPin, Syringe, CalendarPlus, MessageCircle, ChevronRight, ShieldCheck } from "lucide-react";
+import {
+  MapPin,
+  Syringe,
+  CalendarPlus,
+  MessageCircle,
+  ChevronRight,
+  ShieldCheck,
+} from "lucide-react";
 import { pets, vaccines, visits, petById } from "@/lib/tutor-data";
 
 export const Route = createFileRoute("/tutor/")({

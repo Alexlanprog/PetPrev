@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Thermometer, ClipboardPlus, CheckCircle2, AlertTriangle, Loader2, Clock } from "lucide-react";
+import {
+  Thermometer,
+  ClipboardPlus,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  Clock,
+} from "lucide-react";
 import { SyncBar } from "@/components/SyncBar";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 import { clearSynced, type QueuedRecord } from "@/lib/offline-db";

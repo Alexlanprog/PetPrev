@@ -2,6 +2,7 @@
 
 Atue como Desenvolvedor Frontend Sênior em Next.js 14 (App Router) e Tailwind CSS.
 Crie o painel administrativo da PetPrev contendo:
+
 1. Dashboard de KPIs (Assinaturas ativas, MRR, atendimentos do dia);
 2. Tela de Auditoria do RT: listagem de prontuários com flag `has_conflict`, validação de travas térmicas e aprovação de versões de protocolos clínicos;
 3. Visualização em Mapa dos atendimentos agrupados por índices H3
