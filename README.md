@@ -34,6 +34,12 @@ A **PetPrev** é uma plataforma digital de saúde preventiva veterinária por as
 
 ---
 
+## 🌐 MVP Publicado
+
+> **TODO:** adicionar aqui a URL pública do MVP em produção (ex.: `https://petprev.exemplo.com.br`).
+
+---
+
 ## 🚀 Opção 1: Demonstração Rápida (Sem Instalar Nada)
 
 Se você quer apenas conhecer o visual e navegar pelas telas do sistema já publicadas, acesse os repositórios dos front-ends construídos no Lovable:
@@ -63,7 +69,40 @@ cd Petprev
 
 ---
 
-### Passo 2: Subir a Infraestrutura (Banco de Dados, Redis e MinIO)
+### Passo 2: Configurar Variáveis de Ambiente
+
+O projeto usa um arquivo `.env` para configurar banco de dados, Redis, storage, autenticação e integrações externas. O arquivo de exemplo está na raiz do repositório, mas o backend (NestJS) procura o `.env` a partir do diretório onde é executado (`backend/`) — copie para lá:
+
+```bash
+cp .env.example backend/.env
+```
+
+Os valores padrão do `.env.example` já funcionam para rodar o projeto localmente com o `docker-compose.yml` fornecido — não é obrigatório alterar nada para subir o ambiente de desenvolvimento. Ainda assim, vale entender o que cada bloco de variáveis controla:
+
+| Variável | Obrigatória? | Descrição |
+| :--- | :--- | :--- |
+| `NODE_ENV` | Sim | `development` habilita o `DevModule` (seed de contas de teste); em `production` esse módulo fica desabilitado. |
+| `PORT`, `API_PREFIX`, `APP_URL`, `CORS_ORIGINS` | Sim | Porta e prefixo da API, URL pública do backend e origens permitidas por CORS. |
+| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL` | Sim | Conexão com o PostgreSQL 16 + PostGIS subido pelo Docker Compose. |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_URL` | Sim | Conexão com o Redis usado para cache, filas BullMQ e rate-limiting de OTP. |
+| `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_CONSOLE_PORT`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_USE_SSL`, `MINIO_PUBLIC_URL` | Sim | Credenciais e endpoint do MinIO (armazenamento compatível com S3) usado para fotos, assinaturas e documentos. |
+| `MINIO_BUCKET_COLDCHAIN`, `MINIO_BUCKET_RECORDS`, `MINIO_BUCKET_CARTEIRAS`, `MINIO_BUCKET_AVATARS` | Sim | Nomes dos buckets criados automaticamente no MinIO para cada tipo de arquivo. |
+| `JWT_ACCESS_SECRET` | **Sim** | Segredo de assinatura do token de acesso. **O backend recusa iniciar se essa variável não estiver definida ou tiver menos de 32 caracteres.** |
+| `JWT_ACCESS_EXPIRES_IN` | Sim | Tempo de expiração do token de acesso (ex.: `15m`). |
+| `JWT_REFRESH_SECRET` | **Sim** | Segredo de assinatura do token de refresh. **Mesma validação obrigatória de 32+ caracteres no boot.** |
+| `JWT_REFRESH_EXPIRES_IN` | Sim | Tempo de expiração do token de refresh (ex.: `7d`). |
+| `OTP_TTL_SECONDS`, `OTP_COOLDOWN_SECONDS`, `OTP_MAX_ATTEMPTS` | Sim | Parâmetros do login passwordless via código OTP (SMS/WhatsApp). |
+| `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_NAME` | Opcional | Integração com a Evolution API para envio de WhatsApp. Sem credenciais reais, o envio fica simulado (log local). |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_ROOM_DURATION_MINUTES`, `LIVEKIT_RECORDING_ENABLED` | Opcional | Credenciais do LiveKit para teleorientação por vídeo. **Sem credenciais válidas, o sistema cai automaticamente no fallback `mvp_fallback` (link Jitsi Meet)** — nenhuma funcionalidade quebra. |
+| `ASAAS_API_URL`, `ASAAS_API_KEY` | Opcional | Credenciais da API do gateway de pagamento Asaas (sandbox por padrão). |
+| `ASAAS_WEBHOOK_TOKEN` | Recomendado | Token usado para validar a autenticidade dos webhooks de pagamento recebidos do Asaas. Sem ele configurado corretamente em ambos os lados (Asaas + `.env`), o webhook rejeita as notificações. |
+| `BACKUP_DIR`, `BACKUP_S3_REMOTE`, `BACKUP_RETENTION_DAYS` | Não (só produção) | Parâmetros do script de backup offsite (`scripts/backup-offsite.sh`); não são usados no fluxo de desenvolvimento local. |
+
+> ⚠️ **Atenção:** sem o `.env` configurado (ou sem `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` com pelo menos 32 caracteres), o comando `npm run start:dev` do backend falha imediatamente no boot com o erro `Configuração Inválida: JWT_ACCESS_SECRET é obrigatório e deve ter no mínimo 32 caracteres.` — essa validação existe de propósito, para impedir que o backend suba com segredos fracos ou ausentes.
+
+---
+
+### Passo 3: Subir a Infraestrutura (Banco de Dados, Redis e MinIO)
 
 Inicie os contêineres essenciais em segundo plano:
 
@@ -78,7 +117,7 @@ docker compose up -d postgres redis minio
 
 ---
 
-### Passo 3: Iniciar o Backend (NestJS)
+### Passo 4: Iniciar o Backend (NestJS)
 
 Abra um terminal e entre na pasta do backend:
 
@@ -92,7 +131,7 @@ O servidor NestJS iniciará em: **`http://localhost:3000/api/v1`**.
 
 ---
 
-### Passo 4: Iniciar o Painel Administrativo Web (`frontend-web`)
+### Passo 5: Iniciar o Painel Administrativo Web (`frontend-web`)
 
 Abra um segundo terminal e execute:
 
@@ -111,7 +150,7 @@ Acesse o painel no navegador: **`http://localhost:5173`**
 
 ---
 
-### Passo 5: Iniciar o Aplicativo Mobile / Tutor & Vet (`frontend-mobile`)
+### Passo 6: Iniciar o Aplicativo Mobile / Tutor & Vet (`frontend-mobile`)
 
 Abra um terceiro terminal e execute:
 
