@@ -59,6 +59,10 @@ export function DevRoleSwitcher() {
     const vetToken = localStorage.getItem("petprev_demo_vet_token") || "DEMO_VET_TOKEN";
     const rtToken = localStorage.getItem("petprev_demo_rt_token") || "DEMO_RT_TOKEN";
 
+    const mobileBase = (typeof window !== "undefined" && (import.meta as any).env?.["VITE_MOBILE_URL"])
+      ? (import.meta as any).env["VITE_MOBILE_URL"].replace(/\/$/, "")
+      : "http://localhost:5174";
+
     if (role === "rt") {
       localStorage.setItem("petprev_auth_token", rtToken);
       toast.info("Perfil ativo: Responsável Técnico (Dra. Helena)");
@@ -66,11 +70,11 @@ export function DevRoleSwitcher() {
     } else if (role === "tutor") {
       localStorage.setItem("petprev_auth_token", tutorToken);
       toast.info("Abrindo visualização do Tutor no App Mobile...");
-      window.open("http://localhost:5174/tutor", "_blank");
+      window.open(`${mobileBase}/tutor`, "_blank");
     } else {
       localStorage.setItem("petprev_auth_token", vetToken);
       toast.info("Abrindo visualização do Veterinário de Campo...");
-      window.open("http://localhost:5174", "_blank");
+      window.open(mobileBase, "_blank");
     }
   };
 
@@ -164,7 +168,7 @@ export function DevRoleSwitcher() {
             </a>
 
             <a
-              href="http://localhost:5174/tutor"
+              href={`${(typeof window !== "undefined" && (import.meta as any).env?.["VITE_MOBILE_URL"]) ? (import.meta as any).env["VITE_MOBILE_URL"].replace(/\/$/, "") : "http://localhost:5174"}/tutor`}
               target="_blank"
               rel="noreferrer"
               className="flex w-full items-center justify-between rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"

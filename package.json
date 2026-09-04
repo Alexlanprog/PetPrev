@@ -9,10 +9,19 @@
     "frontend-mobile"
   ],
   "scripts": {
+    "dev:web": "npm run dev --workspace=frontend-web",
+    "dev:mobile": "npm run dev --workspace=frontend-mobile",
     "build": "npm run build:all",
     "build:web": "npm run build --workspace=frontend-web",
     "build:mobile": "npm run build --workspace=frontend-mobile",
     "build:all": "npm run build:web && npm run build:mobile",
     "test:backend": "npm test --prefix backend"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "overrides": {
+    "rolldown": "1.2.1"
   }
 }
