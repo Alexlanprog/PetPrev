@@ -44,8 +44,8 @@ A **PetPrev** é uma plataforma digital de saúde preventiva veterinária por as
 
 Se você quer apenas conhecer o visual e navegar pelas telas do sistema já publicadas, acesse os repositórios dos front-ends construídos no Lovable:
 
-- 🖥️ **Painel Web de Gestão / Admin:** [paw-map-dash](https://github.com/Alexlanprog/paw-map-dash.git)
-- 📱 **Aplicativo Mobile (Tutor & Veterinário):** [vet-home-care-sync](https://github.com/Alexlanprog/vet-home-care-sync.git)
+- 🖥️ **Painel Web de Gestão / Admin:** [paw-map-dash](https://pet-prev-test.vercel.app/)
+- 📱 **Aplicativo Mobile (Tutor & Veterinário):** [vet-home-care-sync](https://pet-prev-test-bewj.vercel.app/)
 
 ---
 
