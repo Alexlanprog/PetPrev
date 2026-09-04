@@ -8,10 +8,10 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@petprev/ui";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportLovableError } from "@petprev/utils";
 import { DevRoleSwitcher } from "@/components/DevRoleSwitcher";
 
 function NotFoundComponent() {

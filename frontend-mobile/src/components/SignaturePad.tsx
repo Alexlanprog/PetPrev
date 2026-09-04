@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@petprev/ui";
 import { Eraser } from "lucide-react";
 
 interface SignaturePadProps {

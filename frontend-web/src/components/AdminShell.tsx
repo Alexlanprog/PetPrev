@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, ShieldCheck, Hexagon, PawPrint } from "lucide-react";
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@petprev/utils";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },

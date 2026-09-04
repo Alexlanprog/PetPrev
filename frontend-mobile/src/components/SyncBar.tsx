@@ -1,7 +1,7 @@
 import { Cloud, CloudOff, RefreshCw } from "lucide-react";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 import { flushQueue } from "@/lib/offline-db";
-import { Button } from "@/components/ui/button";
+import { Button } from "@petprev/ui";
 
 export function SyncBar() {
   const { pending, online } = useOfflineQueue();

@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AdminShell } from "@/components/AdminShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, Badge } from "@petprev/ui";
 import { celulasH3, type CelulaH3 } from "@/lib/petprev-data";
 
 export const Route = createFileRoute("/mapa")({

@@ -2,23 +2,21 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditCard, UserPlus, LifeBuoy, Check, Receipt } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  Button,
+  Input,
+  Label,
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@petprev/ui";
 
 import { useEffect } from "react";
 import { mobileApi } from "@/lib/api-client";

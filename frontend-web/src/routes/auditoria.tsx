@@ -3,20 +3,26 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, Check, Snowflake, ThermometerSun, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/AdminShell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Switch,
+  Label,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@petprev/ui";
 import { prontuarios as seedProntuarios, protocolos, type Prontuario } from "@/lib/petprev-data";
 import { adminApi } from "@/lib/api-client";
 import { useEffect } from "react";

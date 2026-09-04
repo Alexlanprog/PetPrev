@@ -10,8 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { Toaster } from "@/components/ui/sonner";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Toaster } from "@petprev/ui";
+import { reportLovableError } from "@petprev/utils";
 import { DevRoleSwitcher } from "@/components/DevRoleSwitcher";
 
 function NotFoundComponent() {

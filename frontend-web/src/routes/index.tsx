@@ -12,8 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { AdminShell } from "@/components/AdminShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, Badge } from "@petprev/ui";
 import { atendimentosHora, mrrSerie, prontuarios } from "@/lib/petprev-data";
 
 export const Route = createFileRoute("/")({

@@ -2,17 +2,17 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Weight, Cake, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  Button,
+  Input,
+  Label,
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@petprev/ui";
 import { pets as seedPets, clinicalHistory, type Pet } from "@/lib/tutor-data";
 
 import { useEffect } from "react";

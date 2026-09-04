@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@petprev/ui";
 import { Camera, RotateCcw } from "lucide-react";
 
 interface PhotoCaptureProps {

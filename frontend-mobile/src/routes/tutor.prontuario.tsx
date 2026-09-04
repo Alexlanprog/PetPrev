@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Syringe, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@petprev/ui";
 import { pets, vaccines, prescriptions, clinicalHistory, petById } from "@/lib/tutor-data";
 import { printDocument } from "@/lib/print-pdf";
 

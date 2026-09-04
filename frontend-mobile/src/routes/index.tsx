@@ -22,7 +22,7 @@ import {
   type CachedAppointment,
   DEFAULT_CACHED_APPOINTMENTS,
 } from "@/lib/offline-db";
-import { Button } from "@/components/ui/button";
+import { Button } from "@petprev/ui";
 
 export const Route = createFileRoute("/")({
   head: () => ({

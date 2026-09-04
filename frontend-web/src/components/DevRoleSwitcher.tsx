@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { UserCheck, Stethoscope, ShieldCheck, Database, FileCode2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@petprev/ui";
 
 export function DevRoleSwitcher() {
   const [open, setOpen] = useState(false);

@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Scale, Thermometer, Dog } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button, Input, Label, Textarea } from "@petprev/ui";
 import { SignaturePad } from "@/components/SignaturePad";
 import { SyncBar } from "@/components/SyncBar";
 import {
