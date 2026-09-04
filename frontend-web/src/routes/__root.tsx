@@ -7,12 +7,13 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@petprev/ui";
 import { reportLovableError } from "@petprev/utils";
 import { DevRoleSwitcher } from "@/components/DevRoleSwitcher";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 
 function NotFoundComponent() {
   return (
@@ -133,10 +134,76 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <DevRoleSwitcher />
-      <Toaster />
+      <AuthProvider>
+        <AuthGuard>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <DevRoleSwitcher />
+          <Toaster />
+        </AuthGuard>
+      </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+/**
+ * Protects all routes except /login.
+ * Uses a `mounted` flag to avoid SSR hydration mismatches:
+ * - On the server / before hydration: always renders children (no localStorage available)
+ * - After mount on the client: checks auth and redirects if needed
+ */
+function AuthGuard({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
+
+  // Rotas exclusivas do painel admin (não acessíveis por tutor/vet)
+  const adminOnlyRoutes = ["/", "/auditoria", "/mapa"];
+  const isAdminRoute = adminOnlyRoutes.includes(pathname);
+
+  // Mark as mounted after first client render
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Client-side redirects
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Não autenticado → login
+    if (!isAuthenticated && pathname !== "/login") {
+      router.navigate({ to: "/login", replace: true });
+      return;
+    }
+
+    // Já autenticado tentando acessar /login → home do papel
+    if (isAuthenticated && pathname === "/login") {
+      const home = user?.role === "tutor" ? "/tutor" : user?.role === "vet" ? "/vet" : "/";
+      router.navigate({ to: home, replace: true });
+      return;
+    }
+
+    // Vet ou Tutor tentando acessar rota admin → redireciona para seu painel
+    if (isAuthenticated && isAdminRoute && user?.role === "vet") {
+      router.navigate({ to: "/vet", replace: true });
+      return;
+    }
+    if (isAuthenticated && isAdminRoute && user?.role === "tutor") {
+      router.navigate({ to: "/tutor", replace: true });
+      return;
+    }
+  }, [mounted, isAuthenticated, pathname, router, user, isAdminRoute]);
+
+  // SSR / pre-hydration: render children to match server output
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
+  // Bloqueios síncronos (evita flash de conteúdo errado)
+  if (!isAuthenticated && pathname !== "/login") return null;
+  if (isAuthenticated && isAdminRoute && user?.role === "vet") return null;
+  if (isAuthenticated && isAdminRoute && user?.role === "tutor") return null;
+
+  return <>{children}</>;
 }

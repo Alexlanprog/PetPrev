@@ -1,19 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { UserCheck, Stethoscope, ShieldCheck, Database, FileCode2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@petprev/ui";
+import { useAuth, DEMO_USERS, type UserRole } from "@/lib/auth-context";
+import { useNavigate } from "@tanstack/react-router";
 
 export function DevRoleSwitcher() {
   const [open, setOpen] = useState(false);
-  const [activeRole, setActiveRole] = useState<"tutor" | "vet" | "rt">("rt");
   const [seeding, setSeeding] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("petprev_demo_role");
-    if (saved === "vet" || saved === "rt" || saved === "tutor") {
-      setActiveRole(saved);
-    }
-  }, []);
+  const { user, login, logout } = useAuth();
+  const navigate = useNavigate();
+  const activeRole = user?.role ?? "rt";
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -51,30 +48,26 @@ export function DevRoleSwitcher() {
     }
   };
 
-  const applyRole = (role: "tutor" | "vet" | "rt") => {
-    setActiveRole(role);
-    localStorage.setItem("petprev_demo_role", role);
+  const applyRole = (role: UserRole) => {
+    const demoUser = Object.values(DEMO_USERS).find((u) => u.role === role);
+    if (!demoUser) return;
 
-    const tutorToken = localStorage.getItem("petprev_demo_tutor_token") || "DEMO_TUTOR_TOKEN";
-    const vetToken = localStorage.getItem("petprev_demo_vet_token") || "DEMO_VET_TOKEN";
-    const rtToken = localStorage.getItem("petprev_demo_rt_token") || "DEMO_RT_TOKEN";
+    const { otp: _otp, phone: _phone, ...userData } = demoUser;
+    login(userData);
 
     const mobileBase = (typeof window !== "undefined" && (import.meta as any).env?.["VITE_MOBILE_URL"])
       ? (import.meta as any).env["VITE_MOBILE_URL"].replace(/\/$/, "")
       : "http://localhost:5174";
 
     if (role === "rt") {
-      localStorage.setItem("petprev_auth_token", rtToken);
       toast.info("Perfil ativo: Responsável Técnico (Dra. Helena)");
-      window.location.href = "/auditoria";
+      navigate({ to: "/" });
     } else if (role === "tutor") {
-      localStorage.setItem("petprev_auth_token", tutorToken);
-      toast.info("Abrindo visualização do Tutor no App Mobile...");
-      window.open(`${mobileBase}/tutor`, "_blank");
+      toast.info("Perfil ativo: Tutora Ana Ribeiro");
+      navigate({ to: "/tutor" });
     } else {
-      localStorage.setItem("petprev_auth_token", vetToken);
-      toast.info("Abrindo visualização do Veterinário de Campo...");
-      window.open(mobileBase, "_blank");
+      toast.info("Perfil ativo: Dr. Caio Menezes (Veterinário)");
+      navigate({ to: "/vet" });
     }
   };
 

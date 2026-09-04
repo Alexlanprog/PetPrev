@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CaixaTermicaRouteImport } from './routes/caixa-termica'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProntuarioRouteImport } from './routes/prontuario'
 import { Route as TutorRouteImport } from './routes/tutor'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TutorIndexRouteImport } from './routes/tutor.index'
 import { Route as TutorAgendaRouteImport } from './routes/tutor.agenda'
 import { Route as TutorAssinaturaRouteImport } from './routes/tutor.assinatura'
@@ -24,9 +27,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CaixaTermicaRoute = CaixaTermicaRouteImport.update({
   id: '/caixa-termica',
   path: '/caixa-termica',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProntuarioRoute = ProntuarioRouteImport.update({
@@ -38,6 +51,11 @@ const TutorRoute = TutorRouteImport.update({
   id: '/tutor',
   path: '/tutor',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const TutorIndexRoute = TutorIndexRouteImport.update({
   id: '/',
@@ -67,75 +85,93 @@ const TutorProntuarioRoute = TutorProntuarioRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/caixa-termica': typeof CaixaTermicaRoute
+  '/login': typeof LoginRoute
   '/prontuario': typeof ProntuarioRoute
   '/tutor': typeof TutorRouteWithChildren
   '/tutor/agenda': typeof TutorAgendaRoute
   '/tutor/assinatura': typeof TutorAssinaturaRoute
   '/tutor/pets': typeof TutorPetsRoute
   '/tutor/prontuario': typeof TutorProntuarioRoute
+  '/admin/': typeof AdminIndexRoute
   '/tutor/': typeof TutorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/caixa-termica': typeof CaixaTermicaRoute
+  '/login': typeof LoginRoute
   '/prontuario': typeof ProntuarioRoute
   '/tutor/agenda': typeof TutorAgendaRoute
   '/tutor/assinatura': typeof TutorAssinaturaRoute
   '/tutor/pets': typeof TutorPetsRoute
   '/tutor/prontuario': typeof TutorProntuarioRoute
+  '/admin': typeof AdminIndexRoute
   '/tutor': typeof TutorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/caixa-termica': typeof CaixaTermicaRoute
+  '/login': typeof LoginRoute
   '/prontuario': typeof ProntuarioRoute
   '/tutor': typeof TutorRouteWithChildren
   '/tutor/agenda': typeof TutorAgendaRoute
   '/tutor/assinatura': typeof TutorAssinaturaRoute
   '/tutor/pets': typeof TutorPetsRoute
   '/tutor/prontuario': typeof TutorProntuarioRoute
+  '/admin/': typeof AdminIndexRoute
   '/tutor/': typeof TutorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/caixa-termica'
+    | '/login'
     | '/prontuario'
     | '/tutor'
     | '/tutor/agenda'
     | '/tutor/assinatura'
     | '/tutor/pets'
     | '/tutor/prontuario'
+    | '/admin/'
     | '/tutor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/caixa-termica'
+    | '/login'
     | '/prontuario'
     | '/tutor/agenda'
     | '/tutor/assinatura'
     | '/tutor/pets'
     | '/tutor/prontuario'
+    | '/admin'
     | '/tutor'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/caixa-termica'
+    | '/login'
     | '/prontuario'
     | '/tutor'
     | '/tutor/agenda'
     | '/tutor/assinatura'
     | '/tutor/pets'
     | '/tutor/prontuario'
+    | '/admin/'
     | '/tutor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CaixaTermicaRoute: typeof CaixaTermicaRoute
+  LoginRoute: typeof LoginRoute
   ProntuarioRoute: typeof ProntuarioRoute
   TutorRoute: typeof TutorRouteWithChildren
 }
@@ -149,11 +185,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/caixa-termica': {
       id: '/caixa-termica'
       path: '/caixa-termica'
       fullPath: '/caixa-termica'
       preLoaderRoute: typeof CaixaTermicaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/prontuario': {
@@ -169,6 +219,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tutor'
       preLoaderRoute: typeof TutorRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/tutor/': {
       id: '/tutor/'
@@ -208,6 +265,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface TutorRouteChildren {
   TutorAgendaRoute: typeof TutorAgendaRoute
   TutorAssinaturaRoute: typeof TutorAssinaturaRoute
@@ -228,7 +295,9 @@ const TutorRouteWithChildren = TutorRoute._addFileChildren(TutorRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   CaixaTermicaRoute: CaixaTermicaRoute,
+  LoginRoute: LoginRoute,
   ProntuarioRoute: ProntuarioRoute,
   TutorRoute: TutorRouteWithChildren,
 }

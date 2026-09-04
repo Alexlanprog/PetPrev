@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { UserCheck, Stethoscope, ShieldCheck, Database, FileCode2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@petprev/ui";
+import { DEMO_USERS, useAuth, type UserRole } from "@/lib/auth-context";
 
 export function DevRoleSwitcher() {
   const [open, setOpen] = useState(false);
-  const [activeRole, setActiveRole] = useState<"tutor" | "vet" | "rt">("tutor");
+  const [activeRole, setActiveRole] = useState<UserRole>("tutor");
   const [seeding, setSeeding] = useState(false);
+  const { login } = useAuth();
 
   useEffect(() => {
     const saved = localStorage.getItem("petprev_demo_role");
@@ -53,23 +55,27 @@ export function DevRoleSwitcher() {
     }
   };
 
-  const applyRole = (role: "tutor" | "vet" | "rt") => {
-    setActiveRole(role);
-    localStorage.setItem("petprev_demo_role", role);
+  const applyRole = (role: UserRole) => {
+    const demoUser = Object.values(DEMO_USERS).find((u) => u.role === role);
+    if (!demoUser) return;
 
-    const tutorToken = localStorage.getItem("petprev_demo_tutor_token") || "DEMO_TUTOR_TOKEN";
-    const vetToken = localStorage.getItem("petprev_demo_vet_token") || "DEMO_VET_TOKEN";
-    const rtToken = localStorage.getItem("petprev_demo_rt_token") || "DEMO_RT_TOKEN";
+    const { otp: _otp, phone: _phone, ...userData } = demoUser;
+    login(userData);
+    setActiveRole(role);
+
+    const webBase = (typeof window !== "undefined" && (import.meta as any).env?.["VITE_WEB_URL"])
+      ? (import.meta as any).env["VITE_WEB_URL"].replace(/\/$/, "")
+      : "http://localhost:5173";
 
     if (role === "tutor") {
-      localStorage.setItem("petprev_mobile_auth_token", tutorToken);
       toast.info("Perfil ativo: Tutor (Ana Ribeiro)");
+      window.location.href = "/tutor";
     } else if (role === "vet") {
-      localStorage.setItem("petprev_mobile_auth_token", vetToken);
-      toast.info("Perfil ativo: Veterinário (Dra. Camila)");
+      toast.info("Perfil ativo: Veterinário (Dr. Caio)");
+      window.location.href = "/";
     } else {
-      localStorage.setItem("petprev_mobile_auth_token", rtToken);
-      toast.info("Perfil ativo: RT / Auditor (Dra. Helena)");
+      toast.info("Abrindo o Painel Web (RT/Admin)...");
+      window.location.href = `${webBase}/`;
     }
   };
 
@@ -101,10 +107,7 @@ export function DevRoleSwitcher() {
 
           <div className="grid grid-cols-3 gap-1.5 mb-3">
             <button
-              onClick={() => {
-                applyRole("tutor");
-                window.location.href = "/tutor";
-              }}
+              onClick={() => applyRole("tutor")}
               className={`flex flex-col items-center justify-center rounded-xl p-2 text-center text-xs font-medium transition-colors ${
                 activeRole === "tutor"
                   ? "bg-primary text-primary-foreground font-semibold shadow"
@@ -116,10 +119,7 @@ export function DevRoleSwitcher() {
             </button>
 
             <button
-              onClick={() => {
-                applyRole("vet");
-                window.location.href = "/";
-              }}
+              onClick={() => applyRole("vet")}
               className={`flex flex-col items-center justify-center rounded-xl p-2 text-center text-xs font-medium transition-colors ${
                 activeRole === "vet"
                   ? "bg-primary text-primary-foreground font-semibold shadow"
@@ -131,10 +131,7 @@ export function DevRoleSwitcher() {
             </button>
 
             <button
-              onClick={() => {
-                applyRole("rt");
-                window.location.href = "/tutor/prontuario";
-              }}
+              onClick={() => applyRole("rt")}
               className={`flex flex-col items-center justify-center rounded-xl p-2 text-center text-xs font-medium transition-colors ${
                 activeRole === "rt"
                   ? "bg-primary text-primary-foreground font-semibold shadow"

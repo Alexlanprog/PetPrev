@@ -10,10 +10,13 @@ import {
   Download,
   Calendar,
   Dog,
+  LogOut,
+  PlayCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SyncBar } from "@/components/SyncBar";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
+import { useAuth } from "@/lib/auth-context";
 import {
   clearSynced,
   getCachedAppointments,
@@ -57,6 +60,7 @@ function StatusIcon({ record }: { record: QueuedRecord }) {
 }
 
 function Home() {
+  const { logout } = useAuth();
   const { records, online } = useOfflineQueue();
   const [appointments, setAppointments] = useState<CachedAppointment[]>(DEFAULT_CACHED_APPOINTMENTS);
   const [downloading, setDownloading] = useState(false);
@@ -87,9 +91,15 @@ function Home() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md space-y-5 px-4 pb-16 pt-8">
-      <header className="space-y-1">
-        <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
+        <div className="space-y-1">
           <p className="field-label">Visita #{primaryVisit.id.slice(0, 8)} · {primaryVisit.timeWindow}</p>
+          <h1 className="text-2xl font-bold tracking-tight">Atendimento domiciliar</h1>
+          <p className="text-sm text-muted-foreground">
+            Tutor {primaryVisit.tutorName} · Paciente {primaryVisit.petName} ({primaryVisit.petBreed})
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
           <Button
             type="button"
             variant="outline"
@@ -99,16 +109,23 @@ function Home() {
             disabled={downloading}
           >
             <Download className="size-3.5" />
-            {downloading ? "Salvando..." : "Baixar agenda offline"}
+            {downloading ? "Salvando..." : "Baixar agenda"}
           </Button>
+          <button onClick={logout} className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <LogOut className="size-4" /> Sair
+          </button>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Atendimento domiciliar</h1>
-        <p className="text-sm text-muted-foreground">
-          Tutor {primaryVisit.tutorName} · Paciente {primaryVisit.petName} ({primaryVisit.petBreed})
-        </p>
       </header>
 
       <SyncBar />
+
+      <Link
+        to="/prontuario"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-[0.98] transition-transform mt-2"
+      >
+        <PlayCircle className="size-5" />
+        Iniciar Consulta Agora
+      </Link>
 
       {/* Agendamentos do dia em cache (C3bis) */}
       <section className="space-y-2 rounded-2xl border border-border bg-card p-4 shadow-xs">

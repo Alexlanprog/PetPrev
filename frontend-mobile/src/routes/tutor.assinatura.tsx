@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CreditCard, UserPlus, LifeBuoy, Check, Receipt } from "lucide-react";
+import { CreditCard, UserPlus, LifeBuoy, Check, Receipt, AlertTriangle, Gift } from "lucide-react";
 import { toast } from "sonner";
 import {
   Button,
@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@petprev/ui";
 
 import { useEffect } from "react";
@@ -49,12 +50,23 @@ const benefits = [
 
 function Assinatura() {
   const [open, setOpen] = useState(false);
+  const [openCancel, setOpenCancel] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   const [planData, setPlanData] = useState({
     name: "PetPrev Essencial",
     price: "R$ 149,90/mês",
     renewal: "renova no dia 12",
     status: "ACTIVE",
   });
+
+  const handleCancel = () => {
+    setIsCanceling(true);
+    setTimeout(() => {
+      setIsCanceling(false);
+      setOpenCancel(false);
+      toast.success("Assinatura cancelada. Sentiremos sua falta!");
+    }, 1500);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -218,6 +230,50 @@ function Assinatura() {
         >
           <LifeBuoy className="size-4" /> Falar com o suporte
         </Button>
+        <Dialog open={openCancel} onOpenChange={setOpenCancel}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
+            >
+              <AlertTriangle className="size-4" /> Cancelar assinatura
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-[92vw] rounded-2xl sm:max-w-md p-4">
+            <DialogHeader className="text-left">
+              <DialogTitle>Tem certeza que deseja cancelar?</DialogTitle>
+              <DialogDescription>
+                Você perderá acesso imediato aos agendamentos domiciliares.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 my-2 flex items-start gap-3">
+              <Gift className="size-8 text-primary shrink-0" />
+              <div>
+                <h4 className="font-bold text-primary text-sm">Temos uma oferta especial!</h4>
+                <p className="text-xs text-muted-foreground mt-1">Fique conosco e ganhe <strong>30% de desconto</strong> na próxima mensalidade.</p>
+              </div>
+            </div>
+            <DialogFooter className="flex-col gap-2 mt-2 sm:flex-row">
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setOpenCancel(false);
+                  toast.success("Desconto aplicado! Obrigado por continuar conosco.");
+                }}
+              >
+                Quero o Desconto
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto text-destructive border-destructive/20 hover:bg-destructive/10"
+                onClick={handleCancel}
+                disabled={isCanceling}
+              >
+                {isCanceling ? "Cancelando..." : "Confirmar Cancelamento"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </section>
     </main>
   );

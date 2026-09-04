@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Syringe, FileText } from "lucide-react";
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@petprev/ui";
+import { Download, Syringe, FileText, Calendar, CheckCircle2, Printer } from "lucide-react";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@petprev/ui";
 import { pets, vaccines, prescriptions, clinicalHistory, petById } from "@/lib/tutor-data";
 import { printDocument } from "@/lib/print-pdf";
 
@@ -169,11 +169,63 @@ function Prontuario() {
         <TabsContent value="historico" className="space-y-2 pt-4">
           {clinicalHistory
             .filter((h) => h.petId === petId)
-            .map((h) => (
-              <div key={h.id} className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground">{h.date}</p>
-                <p className="text-sm font-semibold">{h.title}</p>
-                <p className="text-sm text-muted-foreground">{h.summary}</p>
+            .map((entry) => (
+              <div key={entry.id} className="rounded-2xl border border-border bg-card p-4">
+                <p className="text-xs text-muted-foreground">{entry.date}</p>
+                <p className="text-sm font-semibold">{entry.title}</p>
+                <p className="text-sm text-muted-foreground">{entry.summary}</p>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold hover:bg-accent active:scale-[0.98] transition-all">
+                      <CheckCircle2 className="size-4" /> Ver documento completo
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[calc(100vw-2rem)] rounded-2xl max-h-[90vh] flex flex-col p-4">
+                    <DialogHeader className="flex flex-row items-center justify-between border-b pb-4 shrink-0 text-left">
+                      <div>
+                        <DialogTitle>Documento Clínico</DialogTitle>
+                        <DialogDescription className="text-xs">Assinado por PetPrev</DialogDescription>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button className="p-2 hover:bg-accent rounded-lg text-muted-foreground"><Download className="size-4" /></button>
+                      </div>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto pt-4 pb-2">
+                      <div className="bg-white rounded-lg shadow-sm border border-border p-4 text-black text-sm">
+                        <div className="border-b border-primary pb-3 mb-3">
+                          <h2 className="text-lg font-serif font-bold text-primary">PetPrev</h2>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Clínica Veterinária</p>
+                          <div className="mt-2 text-xs text-gray-600">
+                            <p>{entry.date}</p>
+                            <p>Paciente: {pet?.name}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4 text-gray-800">
+                          <div>
+                            <h3 className="font-bold mb-1">{entry.title}</h3>
+                            <p className="text-xs">{entry.summary}</p>
+                          </div>
+                          
+                          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <h4 className="font-bold text-xs mb-1 text-gray-900">Evolução Clínica / Receituário</h4>
+                            <p className="text-xs">Evolução satisfatória. Manter repouso.</p>
+                            <ul className="list-disc pl-4 mt-2 space-y-1 text-xs">
+                              <li>Dipirona 500mg - 1 comp. 12/12h</li>
+                              <li>Limpeza com soro fisiológico</li>
+                            </ul>
+                          </div>
+                          
+                          <div className="mt-6 pt-4 text-center border-t border-gray-200">
+                            <p className="font-script text-lg text-blue-900 italic mb-1">Assinado digitalmente</p>
+                            <p className="font-bold text-xs">Dra. Camila Souza</p>
+                            <p className="text-[10px] text-gray-500">CRMV-BA 12345</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             ))}
         </TabsContent>

@@ -11,7 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MapaRouteImport } from './routes/mapa'
+import { Route as TutorRouteImport } from './routes/tutor'
+import { Route as VetRouteImport } from './routes/vet'
+import { Route as TutorIndexRouteImport } from './routes/tutor/index'
+import { Route as TutorAgendaRouteImport } from './routes/tutor/agenda'
+import { Route as TutorAssinaturaRouteImport } from './routes/tutor/assinatura'
+import { Route as TutorPetsRouteImport } from './routes/tutor/pets'
+import { Route as TutorProntuarioRouteImport } from './routes/tutor/prontuario'
+import { Route as VetIndexRouteImport } from './routes/vet/index'
+import { Route as VetProntuarioRouteImport } from './routes/vet/prontuario'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +33,159 @@ const AuditoriaRoute = AuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapaRoute = MapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TutorRoute = TutorRouteImport.update({
+  id: '/tutor',
+  path: '/tutor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VetRoute = VetRouteImport.update({
+  id: '/vet',
+  path: '/vet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TutorIndexRoute = TutorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TutorRoute,
+} as any)
+const TutorAgendaRoute = TutorAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => TutorRoute,
+} as any)
+const TutorAssinaturaRoute = TutorAssinaturaRouteImport.update({
+  id: '/assinatura',
+  path: '/assinatura',
+  getParentRoute: () => TutorRoute,
+} as any)
+const TutorPetsRoute = TutorPetsRouteImport.update({
+  id: '/pets',
+  path: '/pets',
+  getParentRoute: () => TutorRoute,
+} as any)
+const TutorProntuarioRoute = TutorProntuarioRouteImport.update({
+  id: '/prontuario',
+  path: '/prontuario',
+  getParentRoute: () => TutorRoute,
+} as any)
+const VetIndexRoute = VetIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VetRoute,
+} as any)
+const VetProntuarioRoute = VetProntuarioRouteImport.update({
+  id: '/prontuario',
+  path: '/prontuario',
+  getParentRoute: () => VetRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auditoria': typeof AuditoriaRoute
+  '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
+  '/tutor': typeof TutorRouteWithChildren
+  '/vet': typeof VetRouteWithChildren
+  '/tutor/agenda': typeof TutorAgendaRoute
+  '/tutor/assinatura': typeof TutorAssinaturaRoute
+  '/tutor/pets': typeof TutorPetsRoute
+  '/tutor/prontuario': typeof TutorProntuarioRoute
+  '/vet/prontuario': typeof VetProntuarioRoute
+  '/tutor/': typeof TutorIndexRoute
+  '/vet/': typeof VetIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auditoria': typeof AuditoriaRoute
+  '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
+  '/tutor/agenda': typeof TutorAgendaRoute
+  '/tutor/assinatura': typeof TutorAssinaturaRoute
+  '/tutor/pets': typeof TutorPetsRoute
+  '/tutor/prontuario': typeof TutorProntuarioRoute
+  '/vet/prontuario': typeof VetProntuarioRoute
+  '/tutor': typeof TutorIndexRoute
+  '/vet': typeof VetIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auditoria': typeof AuditoriaRoute
+  '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
+  '/tutor': typeof TutorRouteWithChildren
+  '/vet': typeof VetRouteWithChildren
+  '/tutor/agenda': typeof TutorAgendaRoute
+  '/tutor/assinatura': typeof TutorAssinaturaRoute
+  '/tutor/pets': typeof TutorPetsRoute
+  '/tutor/prontuario': typeof TutorProntuarioRoute
+  '/vet/prontuario': typeof VetProntuarioRoute
+  '/tutor/': typeof TutorIndexRoute
+  '/vet/': typeof VetIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auditoria' | '/mapa'
+  fullPaths:
+    | '/'
+    | '/auditoria'
+    | '/login'
+    | '/mapa'
+    | '/tutor'
+    | '/vet'
+    | '/tutor/agenda'
+    | '/tutor/assinatura'
+    | '/tutor/pets'
+    | '/tutor/prontuario'
+    | '/vet/prontuario'
+    | '/tutor/'
+    | '/vet/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auditoria' | '/mapa'
-  id: '__root__' | '/' | '/auditoria' | '/mapa'
+  to:
+    | '/'
+    | '/auditoria'
+    | '/login'
+    | '/mapa'
+    | '/tutor/agenda'
+    | '/tutor/assinatura'
+    | '/tutor/pets'
+    | '/tutor/prontuario'
+    | '/vet/prontuario'
+    | '/tutor'
+    | '/vet'
+  id:
+    | '__root__'
+    | '/'
+    | '/auditoria'
+    | '/login'
+    | '/mapa'
+    | '/tutor'
+    | '/vet'
+    | '/tutor/agenda'
+    | '/tutor/assinatura'
+    | '/tutor/pets'
+    | '/tutor/prontuario'
+    | '/vet/prontuario'
+    | '/tutor/'
+    | '/vet/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditoriaRoute: typeof AuditoriaRoute
+  LoginRoute: typeof LoginRoute
   MapaRoute: typeof MapaRoute
+  TutorRoute: typeof TutorRouteWithChildren
+  VetRoute: typeof VetRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mapa': {
       id: '/mapa'
       path: '/mapa'
@@ -82,13 +218,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tutor': {
+      id: '/tutor'
+      path: '/tutor'
+      fullPath: '/tutor'
+      preLoaderRoute: typeof TutorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vet': {
+      id: '/vet'
+      path: '/vet'
+      fullPath: '/vet'
+      preLoaderRoute: typeof VetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tutor/': {
+      id: '/tutor/'
+      path: '/'
+      fullPath: '/tutor/'
+      preLoaderRoute: typeof TutorIndexRouteImport
+      parentRoute: typeof TutorRoute
+    }
+    '/tutor/agenda': {
+      id: '/tutor/agenda'
+      path: '/agenda'
+      fullPath: '/tutor/agenda'
+      preLoaderRoute: typeof TutorAgendaRouteImport
+      parentRoute: typeof TutorRoute
+    }
+    '/tutor/assinatura': {
+      id: '/tutor/assinatura'
+      path: '/assinatura'
+      fullPath: '/tutor/assinatura'
+      preLoaderRoute: typeof TutorAssinaturaRouteImport
+      parentRoute: typeof TutorRoute
+    }
+    '/tutor/pets': {
+      id: '/tutor/pets'
+      path: '/pets'
+      fullPath: '/tutor/pets'
+      preLoaderRoute: typeof TutorPetsRouteImport
+      parentRoute: typeof TutorRoute
+    }
+    '/tutor/prontuario': {
+      id: '/tutor/prontuario'
+      path: '/prontuario'
+      fullPath: '/tutor/prontuario'
+      preLoaderRoute: typeof TutorProntuarioRouteImport
+      parentRoute: typeof TutorRoute
+    }
+    '/vet/': {
+      id: '/vet/'
+      path: '/'
+      fullPath: '/vet/'
+      preLoaderRoute: typeof VetIndexRouteImport
+      parentRoute: typeof VetRoute
+    }
+    '/vet/prontuario': {
+      id: '/vet/prontuario'
+      path: '/prontuario'
+      fullPath: '/vet/prontuario'
+      preLoaderRoute: typeof VetProntuarioRouteImport
+      parentRoute: typeof VetRoute
+    }
   }
 }
+
+interface TutorRouteChildren {
+  TutorAgendaRoute: typeof TutorAgendaRoute
+  TutorAssinaturaRoute: typeof TutorAssinaturaRoute
+  TutorPetsRoute: typeof TutorPetsRoute
+  TutorProntuarioRoute: typeof TutorProntuarioRoute
+  TutorIndexRoute: typeof TutorIndexRoute
+}
+
+const TutorRouteChildren: TutorRouteChildren = {
+  TutorAgendaRoute: TutorAgendaRoute,
+  TutorAssinaturaRoute: TutorAssinaturaRoute,
+  TutorPetsRoute: TutorPetsRoute,
+  TutorProntuarioRoute: TutorProntuarioRoute,
+  TutorIndexRoute: TutorIndexRoute,
+}
+
+const TutorRouteWithChildren = TutorRoute._addFileChildren(TutorRouteChildren)
+
+interface VetRouteChildren {
+  VetProntuarioRoute: typeof VetProntuarioRoute
+  VetIndexRoute: typeof VetIndexRoute
+}
+
+const VetRouteChildren: VetRouteChildren = {
+  VetProntuarioRoute: VetProntuarioRoute,
+  VetIndexRoute: VetIndexRoute,
+}
+
+const VetRouteWithChildren = VetRoute._addFileChildren(VetRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditoriaRoute: AuditoriaRoute,
+  LoginRoute: LoginRoute,
   MapaRoute: MapaRoute,
+  TutorRoute: TutorRouteWithChildren,
+  VetRoute: VetRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
