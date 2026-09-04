@@ -9,6 +9,7 @@
     "frontend-mobile"
   ],
   "scripts": {
+    "build": "npm run build:all",
     "build:web": "npm run build --workspace=frontend-web",
     "build:mobile": "npm run build --workspace=frontend-mobile",
     "build:all": "npm run build:web && npm run build:mobile",
