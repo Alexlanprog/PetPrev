@@ -61,7 +61,9 @@ export function DevRoleSwitcher() {
 
     const mobileBase = (typeof window !== "undefined" && (import.meta as any).env?.["VITE_MOBILE_URL"])
       ? (import.meta as any).env["VITE_MOBILE_URL"].replace(/\/$/, "")
-      : "http://localhost:5174";
+      : (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
+        ? "https://pet-prev-test-bewj.vercel.app"
+        : "http://localhost:5174");
 
     if (role === "rt") {
       localStorage.setItem("petprev_auth_token", rtToken);
@@ -168,12 +170,12 @@ export function DevRoleSwitcher() {
             </a>
 
             <a
-              href={`${(typeof window !== "undefined" && (import.meta as any).env?.["VITE_MOBILE_URL"]) ? (import.meta as any).env["VITE_MOBILE_URL"].replace(/\/$/, "") : "http://localhost:5174"}/tutor`}
+              href={`${(typeof window !== "undefined" && (import.meta as any).env?.["VITE_MOBILE_URL"]) ? (import.meta as any).env["VITE_MOBILE_URL"].replace(/\/$/, "") : (typeof window !== "undefined" && window.location.hostname.includes("vercel.app") ? "https://pet-prev-test-bewj.vercel.app" : "http://localhost:5174")}/tutor`}
               target="_blank"
               rel="noreferrer"
               className="flex w-full items-center justify-between rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
             >
-              <span>Abrir App Mobile / Tutor (Porta 5174)</span>
+              <span>Abrir App Mobile / Tutor</span>
               <ExternalLink className="size-3" />
             </a>
           </div>

@@ -172,12 +172,12 @@ export function DevRoleSwitcher() {
             </a>
 
             <a
-              href="http://localhost:5173/auditoria"
+              href={`${(typeof window !== "undefined" && (import.meta as any).env?.["VITE_ADMIN_URL"]) ? (import.meta as any).env["VITE_ADMIN_URL"].replace(/\/$/, "") : (typeof window !== "undefined" && window.location.hostname.includes("vercel.app") ? "https://pet-prev-test.vercel.app" : "http://localhost:5173")}/auditoria`}
               target="_blank"
               rel="noreferrer"
               className="flex w-full items-center justify-between rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
             >
-              <span>Abrir Painel Admin Web (Porta 5173)</span>
+              <span>Abrir Painel Admin Web (RT)</span>
               <ExternalLink className="size-3" />
             </a>
           </div>
