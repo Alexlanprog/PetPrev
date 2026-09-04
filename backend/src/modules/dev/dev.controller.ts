@@ -1,11 +1,13 @@
-import { Controller, Post, Get } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DevService } from './dev.service';
+import { DevEnvironmentGuard } from '../../common/guards/dev-environment.guard';
 
 @ApiTags('Desenvolvimento e Demonstração')
 @Controller('dev')
+@UseGuards(DevEnvironmentGuard)
 export class DevController {
-  constructor(private readonly devService: DevService) {}
+  constructor(private readonly devService: DevService) { }
 
   @Post('seed')
   @ApiOperation({

@@ -6,6 +6,14 @@ import { UserEntity } from '../../database/entities/user.entity';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
 import { latLngToCell } from 'h3-js';
 
+/**
+ * NOTA ARQUITETURAL (Plano 2 - Item B1):
+ * A biblioteca h3-js é utilizada estritamente para o cálculo estático de índices espaciais (resolução 8)
+ * facilitando indexação e buscas geográficas pontuais.
+ * O roteamento dinâmico automatizado e o clustering espacial com DBSCAN (LogisticsModule) estão
+ * formalmente adiados para a v2. No MVP, a triagem e distribuição de rotas é realizada manualmente
+ * por Bairro/CEP no Painel Administrativo.
+ */
 @Injectable()
 export class TutorsService {
   private readonly logger = new Logger(TutorsService.name);

@@ -1,0 +1,17 @@
+{
+  "name": "petprev-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PetPrev — Monorepo Workspace (Web, Mobile, Shared Packages)",
+  "workspaces": [
+    "packages/*",
+    "frontend-web",
+    "frontend-mobile"
+  ],
+  "scripts": {
+    "build:web": "npm run build --workspace=frontend-web",
+    "build:mobile": "npm run build --workspace=frontend-mobile",
+    "build:all": "npm run build:web && npm run build:mobile",
+    "test:backend": "npm test --prefix backend"
+  }
+}

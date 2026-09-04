@@ -52,8 +52,11 @@ export class MedicalRecordsController {
    */
   @Get('pet/:petId')
   @UseGuards(JwtAuthGuard)
-  async getRecordsByPet(@Param('petId') petId: string) {
-    return await this.medicalRecordsService.findByPetId(petId);
+  async getRecordsByPet(
+    @Param('petId') petId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return await this.medicalRecordsService.findByPetId(petId, user);
   }
 
   /**

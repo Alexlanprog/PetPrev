@@ -31,7 +31,7 @@ export class DevService {
     @InjectRepository(SubscriptionEntity)
     private readonly subscriptionRepository: Repository<SubscriptionEntity>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   /**
    * Popula o banco com um cenário completo e realista de demonstração
@@ -244,8 +244,7 @@ export class DevService {
     }
 
     // 8. Gerar Tokens JWT válidos para teste imediato
-    const jwtSecret =
-      process.env.JWT_ACCESS_SECRET || 'petprev_access_token_jwt_secret_key_change_me_in_prod_min_32_chars';
+    const jwtSecret = process.env.JWT_ACCESS_SECRET!;
 
     const tutorToken = this.jwtService.sign(
       { sub: tutorUser.id, phone_number: tutorUser.phone_number, role: tutorUser.role },

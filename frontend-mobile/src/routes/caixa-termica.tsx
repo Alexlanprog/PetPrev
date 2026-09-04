@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PhotoCapture } from "@/components/PhotoCapture";
 import { SyncBar } from "@/components/SyncBar";
-import { enqueue, type ColdChainPayload } from "@/lib/offline-db";
+import { useEffect } from "react";
+import { enqueue, getCachedAppointments, type ColdChainPayload, type CachedAppointment, DEFAULT_CACHED_APPOINTMENTS } from "@/lib/offline-db";
 
 const MIN_C = 2;
 const MAX_C = 8;
@@ -34,10 +35,23 @@ export const Route = createFileRoute("/caixa-termica")({
 
 function ColdChain() {
   const navigate = useNavigate();
+  const [appointments, setAppointments] = useState<CachedAppointment[]>(DEFAULT_CACHED_APPOINTMENTS);
+  const [selectedVisitId, setSelectedVisitId] = useState<string>(DEFAULT_CACHED_APPOINTMENTS[0]?.id || "");
   const [boxId, setBoxId] = useState("CX-014");
   const [temperature, setTemperature] = useState("");
   const [notes, setNotes] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    void getCachedAppointments().then((list) => {
+      if (list && list.length > 0) {
+        setAppointments(list);
+        if (!selectedVisitId || !list.some((a) => a.id === selectedVisitId)) {
+          setSelectedVisitId(list[0].id);
+        }
+      }
+    });
+  }, []);
 
   const value = Number(temperature.replace(",", "."));
   const valid = temperature !== "" && !Number.isNaN(value);
@@ -55,7 +69,7 @@ function ColdChain() {
     }
 
     const payload: ColdChainPayload = {
-      visitId: "VD-2043",
+      visitId: selectedVisitId || "app-demo-001",
       temperatureC: value,
       withinRange,
       boxId,
@@ -64,7 +78,7 @@ function ColdChain() {
       capturedAt: Date.now(),
     };
     enqueue<ColdChainPayload>("cold_chain_check", payload);
-    toast.success("Checagem salva no dispositivo e enfileirada para sincronizar.");
+    toast.success("Checagem salva no IndexedDB do dispositivo e enfileirada para sincronizar.");
     void navigate({ to: "/prontuario" });
   };
 

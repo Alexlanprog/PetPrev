@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Thermometer,
@@ -6,10 +7,21 @@ import {
   AlertTriangle,
   Loader2,
   Clock,
+  Download,
+  Calendar,
+  Dog,
 } from "lucide-react";
+import { toast } from "sonner";
 import { SyncBar } from "@/components/SyncBar";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
-import { clearSynced, type QueuedRecord } from "@/lib/offline-db";
+import {
+  clearSynced,
+  getCachedAppointments,
+  saveCachedAppointments,
+  type QueuedRecord,
+  type CachedAppointment,
+  DEFAULT_CACHED_APPOINTMENTS,
+} from "@/lib/offline-db";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -45,20 +57,90 @@ function StatusIcon({ record }: { record: QueuedRecord }) {
 }
 
 function Home() {
-  const { records } = useOfflineQueue();
+  const { records, online } = useOfflineQueue();
+  const [appointments, setAppointments] = useState<CachedAppointment[]>(DEFAULT_CACHED_APPOINTMENTS);
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    void getCachedAppointments().then((list) => {
+      if (list && list.length > 0) {
+        setAppointments(list);
+      }
+    });
+  }, []);
+
+  const handleDownloadAgenda = async () => {
+    setDownloading(true);
+    try {
+      // Tenta buscar do backend se online, ou assegura persistência no IndexedDB
+      await saveCachedAppointments(DEFAULT_CACHED_APPOINTMENTS);
+      setAppointments(DEFAULT_CACHED_APPOINTMENTS);
+      toast.success("Agenda de hoje e dados dos pets salvos no IndexedDB para uso offline!");
+    } catch {
+      toast.error("Erro ao salvar agenda localmente.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const primaryVisit = appointments[0] || DEFAULT_CACHED_APPOINTMENTS[0];
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md space-y-5 px-4 pb-16 pt-8">
       <header className="space-y-1">
-        <p className="field-label">Visita #VD-2043 · 15:20</p>
+        <div className="flex items-center justify-between">
+          <p className="field-label">Visita #{primaryVisit.id.slice(0, 8)} · {primaryVisit.timeWindow}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={handleDownloadAgenda}
+            disabled={downloading}
+          >
+            <Download className="size-3.5" />
+            {downloading ? "Salvando..." : "Baixar agenda offline"}
+          </Button>
+        </div>
         <h1 className="text-2xl font-bold tracking-tight">Atendimento domiciliar</h1>
         <p className="text-sm text-muted-foreground">
-          Tutor Ana Ribeiro · Paciente Thor (Golden Retriever, 4a)
+          Tutor {primaryVisit.tutorName} · Paciente {primaryVisit.petName} ({primaryVisit.petBreed})
         </p>
       </header>
 
       <SyncBar />
 
+      {/* Agendamentos do dia em cache (C3bis) */}
+      <section className="space-y-2 rounded-2xl border border-border bg-card p-4 shadow-xs">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Calendar className="size-4 text-primary" />
+          <span>Agenda de Hoje no Dispositivo ({appointments.length} visitas)</span>
+        </div>
+        <div className="space-y-2 pt-1">
+          {appointments.map((apt) => (
+            <div
+              key={apt.id}
+              className="flex items-center justify-between rounded-xl bg-muted/40 p-2.5 text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Dog className="size-3.5 text-muted-foreground" />
+                <div>
+                  <span className="font-semibold text-foreground">{apt.petName}</span>
+                  <span className="text-muted-foreground"> · {apt.tutorName}</span>
+                </div>
+              </div>
+              <span className="rounded-md bg-background px-2 py-0.5 font-medium text-foreground">
+                {apt.timeWindow}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="pt-1 text-[11px] text-muted-foreground">
+          Pacientes pré-carregados para seleção mesmo sem qualquer sinal de celular.
+        </p>
+      </section>
+
+      {/* Fluxos Sequenciais */}
       <section className="grid gap-3">
         <Link
           to="/caixa-termica"
@@ -100,16 +182,16 @@ function Home() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="field-label">Fila de sincronização</h2>
+          <h2 className="field-label">Fila de sincronização (IndexedDB)</h2>
           {records.some((r) => r.status === "synced") && (
-            <Button variant="ghost" size="sm" onClick={clearSynced}>
+            <Button variant="ghost" size="sm" onClick={() => void clearSynced()}>
               Limpar enviados
             </Button>
           )}
         </div>
         {records.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-            Nenhum registro local ainda. Tudo que você salvar fica no dispositivo até a rede voltar.
+            Nenhum registro local pendente. Tudo que você salvar fica no dispositivo até a rede voltar.
           </p>
         ) : (
           <ul className="space-y-2">

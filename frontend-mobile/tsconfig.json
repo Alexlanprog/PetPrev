@@ -24,7 +24,11 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@petprev/ui": ["../packages/ui/src/index.ts"],
+      "@petprev/ui/*": ["../packages/ui/src/components/*"],
+      "@petprev/utils": ["../packages/utils/src/index.ts"],
+      "@petprev/utils/*": ["../packages/utils/src/*"]
     }
   }
 }

@@ -20,8 +20,7 @@ export class CommunicationsController {
     @Param('appointmentId') appointmentId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    const token = await this.teleorientationService.generateRoomToken(appointmentId, user.userId, false);
-    return { token };
+    return await this.teleorientationService.getRoomAccess(appointmentId, user.userId, false);
   }
 
   /**
@@ -34,7 +33,6 @@ export class CommunicationsController {
     @Param('appointmentId') appointmentId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    const token = await this.teleorientationService.generateRoomToken(appointmentId, user.userId, true);
-    return { token };
+    return await this.teleorientationService.getRoomAccess(appointmentId, user.userId, true);
   }
 }

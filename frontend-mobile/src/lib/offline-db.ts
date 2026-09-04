@@ -1,11 +1,12 @@
 /**
- * Offline-first local store + sync queue.
+ * Offline-first local store + sync queue powered by IndexedDB (Dexie.js).
  *
- * Web equivalent of the WatermelonDB/SQLite layer used on React Native:
- * records are written locally first (localStorage, synchronous and durable),
- * marked as `pending`, and pushed to the server by the sync engine whenever
- * network connectivity is available.
+ * Armazenamento local durável sem o limite de 5MB do localStorage,
+ * garantindo suporte seguro para evidências fotográficas em alta resolução
+ * e assinaturas digitais coletadas em campo pelo veterinário.
  */
+
+import Dexie, { type Table } from "dexie";
 
 export type SyncStatus = "pending" | "syncing" | "synced" | "failed";
 
@@ -20,6 +21,7 @@ export interface QueuedRecord<T = unknown> {
   status: SyncStatus;
   attempts: number;
   lastError?: string | undefined;
+  isTransient?: boolean;
 }
 
 export interface ColdChainPayload {
@@ -34,54 +36,140 @@ export interface ColdChainPayload {
 
 export interface SoapPayload {
   visitId: string;
+  petId: string;
   patientName: string;
   tutorName: string;
+  weightRecorded: number;
+  temperatureBody: number;
   subjective: string;
   objective: string;
   assessment: string;
   plan: string;
+  appliedVaccines?: string[];
   signatureDataUrl: string | null;
   signedAt: number;
 }
 
-const STORAGE_KEY = "vet.offline.queue.v1";
+export interface CachedAppointment {
+  id: string;
+  petId: string;
+  petName: string;
+  petSpecies: string;
+  petBreed: string;
+  tutorName: string;
+  scheduledDate: string;
+  timeWindow: string;
+  status: string;
+}
+
+export const DEFAULT_CACHED_APPOINTMENTS: CachedAppointment[] = [
+  {
+    id: "app-demo-001",
+    petId: "pet-thor-001",
+    petName: "Thor",
+    petSpecies: "Canino",
+    petBreed: "Golden Retriever",
+    tutorName: "Ana Ribeiro",
+    scheduledDate: new Date().toISOString().split("T")[0],
+    timeWindow: "14:00 - 18:00",
+    status: "EN_ROUTE",
+  },
+  {
+    id: "app-demo-002",
+    petId: "pet-mia-002",
+    petName: "Mia",
+    petSpecies: "Felino",
+    petBreed: "SRD",
+    tutorName: "Ana Ribeiro",
+    scheduledDate: new Date().toISOString().split("T")[0],
+    timeWindow: "14:00 - 18:00",
+    status: "EN_ROUTE",
+  },
+];
+
+export class VetOfflineDB extends Dexie {
+  syncQueue!: Table<QueuedRecord, string>;
+  cachedAppointments!: Table<CachedAppointment, string>;
+
+  constructor() {
+    super("VetOfflineQueueDB");
+    this.version(1).stores({
+      syncQueue: "id, kind, status, createdAt, updatedAt",
+      cachedAppointments: "id, petId, scheduledDate, status",
+    });
+  }
+}
+
+let dbInstance: VetOfflineDB | null = null;
+
+function getDb(): VetOfflineDB | null {
+  if (typeof window === "undefined") return null;
+  if (!dbInstance) {
+    dbInstance = new VetOfflineDB();
+  }
+  return dbInstance;
+}
+
 const MAX_ATTEMPTS = 5;
-
 type Listener = (records: QueuedRecord[]) => void;
-
 const listeners = new Set<Listener>();
-let memory: QueuedRecord[] | null = null;
+
+let memory: QueuedRecord[] = [];
+let dbInitialized = false;
 
 function isBrowser() {
   return typeof window !== "undefined";
 }
 
-function read(): QueuedRecord[] {
-  if (memory) return memory;
-  if (!isBrowser()) return [];
+// Inicializa a leitura do Dexie para a memória reativa
+async function initStore() {
+  if (!isBrowser() || dbInitialized) return;
+  const db = getDb();
+  if (!db) return;
+
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    memory = raw ? (JSON.parse(raw) as QueuedRecord[]) : [];
-  } catch {
-    memory = [];
+    // Migração de legado (localStorage -> Dexie) se existir
+    try {
+      const raw = window.localStorage.getItem("vet.offline.queue.v1");
+      if (raw) {
+        const parsed = JSON.parse(raw) as QueuedRecord[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          await db.syncQueue.bulkPut(parsed);
+          window.localStorage.removeItem("vet.offline.queue.v1");
+        }
+      }
+    } catch {
+      // Ignora erro de parse de legado
+    }
+
+    const records = await db.syncQueue.orderBy("createdAt").reverse().toArray();
+    memory = records;
+    dbInitialized = true;
+    notify();
+
+    // Inicializa agendamentos pré-carregados padrão se vazios
+    const appointmentsCount = await db.cachedAppointments.count();
+    if (appointmentsCount === 0) {
+      await db.cachedAppointments.bulkPut(DEFAULT_CACHED_APPOINTMENTS);
+    }
+  } catch (error) {
+    console.warn("Aviso ao inicializar IndexedDB (Dexie):", error);
   }
-  return memory;
 }
 
-function write(records: QueuedRecord[]) {
-  memory = records;
-  if (isBrowser()) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    } catch {
-      /* quota exceeded — keep in-memory copy */
-    }
-  }
-  listeners.forEach((l) => l(records));
+if (isBrowser()) {
+  void initStore();
+}
+
+function notify() {
+  listeners.forEach((l) => l([...memory]));
 }
 
 export function getRecords(): QueuedRecord[] {
-  return read();
+  if (!dbInitialized && isBrowser()) {
+    void initStore();
+  }
+  return memory;
 }
 
 export function subscribe(listener: Listener) {
@@ -89,6 +177,28 @@ export function subscribe(listener: Listener) {
   return () => {
     listeners.delete(listener);
   };
+}
+
+export async function getCachedAppointments(): Promise<CachedAppointment[]> {
+  const db = getDb();
+  if (!db) return DEFAULT_CACHED_APPOINTMENTS;
+  try {
+    const list = await db.cachedAppointments.toArray();
+    return list.length > 0 ? list : DEFAULT_CACHED_APPOINTMENTS;
+  } catch {
+    return DEFAULT_CACHED_APPOINTMENTS;
+  }
+}
+
+export async function saveCachedAppointments(appointments: CachedAppointment[]): Promise<void> {
+  const db = getDb();
+  if (!db || !appointments.length) return;
+  try {
+    await db.cachedAppointments.clear();
+    await db.cachedAppointments.bulkPut(appointments);
+  } catch (err) {
+    console.error("Erro ao salvar agendamentos em cache offline:", err);
+  }
 }
 
 export function enqueue<T>(kind: RecordKind, payload: T): QueuedRecord<T> {
@@ -102,17 +212,48 @@ export function enqueue<T>(kind: RecordKind, payload: T): QueuedRecord<T> {
     status: "pending",
     attempts: 0,
   };
-  write([record as QueuedRecord, ...read()]);
+
+  memory = [record as QueuedRecord, ...memory];
+  notify();
+
+  const db = getDb();
+  if (db) {
+    db.syncQueue.put(record as QueuedRecord).catch((err) => {
+      console.error("Erro ao persistir registro no Dexie (IndexedDB):", err);
+    });
+  }
+
   void flushQueue();
   return record;
 }
 
-export function clearSynced() {
-  write(read().filter((r) => r.status !== "synced"));
+export async function clearSynced(): Promise<void> {
+  memory = memory.filter((r) => r.status !== "synced");
+  notify();
+
+  const db = getDb();
+  if (db) {
+    try {
+      await db.syncQueue.where("status").equals("synced").delete();
+    } catch (err) {
+      console.error("Erro ao limpar registros sincronizados do Dexie:", err);
+    }
+  }
 }
 
-function patch(id: string, changes: Partial<QueuedRecord>) {
-  write(read().map((r) => (r.id === id ? { ...r, ...changes, updatedAt: Date.now() } : r)));
+async function patchRecord(id: string, changes: Partial<QueuedRecord>) {
+  const now = Date.now();
+  memory = memory.map((r) => (r.id === id ? { ...r, ...changes, updatedAt: now } : r));
+  notify();
+
+  const db = getDb();
+  if (db) {
+    try {
+      await db.syncQueue.update(id, { ...changes, updatedAt: now });
+    } catch (err) {
+      console.warn("Erro ao atualizar registro no Dexie:", err);
+    }
+  }
 }
 
 function dataUrlToBlob(dataUrl: string): Blob {
@@ -127,9 +268,25 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([u8arr], { type: mime });
 }
 
+export class TransientSyncError extends Error {
+  constructor(message: string, public readonly statusCode: number) {
+    super(message);
+    this.name = "TransientSyncError";
+  }
+}
+
+export class ValidationSyncError extends Error {
+  constructor(message: string, public readonly statusCode: number) {
+    super(message);
+    this.name = "ValidationSyncError";
+  }
+}
+
 /** Remote push real: envia os dados locais para a API NestJS via multipart/form-data. */
 async function pushToServer(record: QueuedRecord): Promise<void> {
-  if (!navigator.onLine) throw new Error("Sem conexão de rede");
+  if (!navigator.onLine) {
+    throw new TransientSyncError("Dispositivo sem conexão de rede.", 0);
+  }
 
   const baseUrl =
     typeof window !== "undefined" && (import.meta as any).env?.["VITE_API_BASE_URL"]
@@ -152,35 +309,52 @@ async function pushToServer(record: QueuedRecord): Promise<void> {
       const blob = dataUrlToBlob(payload.photoDataUrl);
       formData.append("photoEvidence", blob, "termometro.jpg");
     } else {
-      // Cria blob dummy caso não haja foto para não quebrar a validação
       const dummyBlob = new Blob(["evidencia"], { type: "image/jpeg" });
       formData.append("photoEvidence", dummyBlob, "evidencia.jpg");
     }
 
-    const res = await fetch(
-      `${baseUrl}/appointments/${payload.visitId || "00000000-0000-0000-0000-000000000000"}/cold-chain`,
-      {
-        method: "POST",
-        headers: authHeaders,
-        body: formData,
-      },
-    );
+    let res: Response;
+    try {
+      res = await fetch(
+        `${baseUrl}/appointments/${payload.visitId}/cold-chain`,
+        {
+          method: "POST",
+          headers: authHeaders,
+          body: formData,
+        },
+      );
+    } catch (networkError) {
+      throw new TransientSyncError(
+        `Falha de conexão ao enviar trava térmica: ${networkError instanceof Error ? networkError.message : String(networkError)}`,
+        0,
+      );
+    }
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Falha no envio da trava térmica: ${err}`);
+      const errText = await res.text();
+      if (res.status === 502 || res.status === 503 || res.status >= 500) {
+        throw new TransientSyncError(`Erro transitório do servidor (${res.status}): ${errText}`, res.status);
+      }
+      throw new ValidationSyncError(`Erro de validação (${res.status}): ${errText}`, res.status);
     }
   } else if (record.kind === "soap_record") {
     const payload = record.payload as SoapPayload;
     const formData = new FormData();
-    formData.append("appointment_id", payload.visitId || "00000000-0000-0000-0000-000000000000");
-    formData.append("pet_id", "00000000-0000-0000-0000-000000000000");
-    formData.append("weight_recorded", "10.0");
-    formData.append("temperature_body", "38.5");
+
+    // Envio dos dados clínicos reais capturados no formulário
+    formData.append("appointment_id", payload.visitId);
+    formData.append("pet_id", payload.petId);
+    formData.append("weight_recorded", String(payload.weightRecorded));
+    formData.append("temperature_body", String(payload.temperatureBody));
     formData.append(
       "clinical_notes",
       `S: ${payload.subjective} | O: ${payload.objective} | A: ${payload.assessment} | P: ${payload.plan}`,
     );
+
+    if (payload.appliedVaccines && payload.appliedVaccines.length > 0) {
+      formData.append("applied_vaccines", payload.appliedVaccines.join(", "));
+    }
+
     formData.append("signature_ecdsa", "MOCK_ECDSA_DEV_SIG_" + Date.now());
     formData.append("payload_signed", JSON.stringify(payload));
     formData.append(
@@ -195,15 +369,34 @@ async function pushToServer(record: QueuedRecord): Promise<void> {
       formData.append("tutorSignaturePhoto", blob, "assinatura_tutor.png");
     }
 
-    const res = await fetch(`${baseUrl}/medical-records/signed`, {
-      method: "POST",
-      headers: authHeaders,
-      body: formData,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${baseUrl}/medical-records/signed`, {
+        method: "POST",
+        headers: authHeaders,
+        body: formData,
+      });
+    } catch (networkError) {
+      throw new TransientSyncError(
+        `Falha de conexão ao enviar prontuário: ${networkError instanceof Error ? networkError.message : String(networkError)}`,
+        0,
+      );
+    }
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Falha no envio do prontuário assinado: ${err}`);
+      const errText = await res.text();
+      // Decisão C4bis: 502/503 ou erro 5xx é transitório (ex: upload temporariamente fora no MinIO).
+      // Deve ser mantido na fila local para retentativa automática sem perder o prontuário.
+      if (res.status === 502 || res.status === 503 || res.status >= 500) {
+        throw new TransientSyncError(
+          `Erro transitório no storage/servidor (${res.status}): ${errText}`,
+          res.status,
+        );
+      }
+      throw new ValidationSyncError(
+        `Erro de validação do prontuário (${res.status}): ${errText}`,
+        res.status,
+      );
     }
   }
 }
@@ -214,23 +407,41 @@ export async function flushQueue(): Promise<void> {
   if (!isBrowser() || flushing) return;
   if (!navigator.onLine) return;
   flushing = true;
+
   try {
     for (;;) {
-      const next = read().find(
+      const records = getRecords();
+      const next = records.find(
         (r) => (r.status === "pending" || r.status === "failed") && r.attempts < MAX_ATTEMPTS,
       );
       if (!next) break;
-      patch(next.id, { status: "syncing" });
+
+      await patchRecord(next.id, { status: "syncing" });
+
       try {
         await pushToServer(next);
-        patch(next.id, { status: "synced", attempts: next.attempts + 1, lastError: undefined });
+        await patchRecord(next.id, {
+          status: "synced",
+          attempts: next.attempts + 1,
+          lastError: undefined,
+          isTransient: false,
+        });
       } catch (error) {
-        patch(next.id, {
+        const isTransient = error instanceof TransientSyncError;
+        const errMsg = error instanceof Error ? error.message : "Falha desconhecida";
+
+        await patchRecord(next.id, {
           status: "failed",
           attempts: next.attempts + 1,
-          lastError: error instanceof Error ? error.message : "Falha desconhecida",
+          lastError: errMsg,
+          isTransient,
         });
-        break;
+
+        // Se for erro transitório de infraestrutura (como 502 no MinIO), interrompe este ciclo
+        // e aguarda o próximo disparo periódico para não sobrecarregar a rede
+        if (isTransient) {
+          break;
+        }
       }
     }
   } finally {
@@ -241,11 +452,14 @@ export async function flushQueue(): Promise<void> {
 /** Background sync routine: retries on reconnect, on focus and on an interval. */
 export function startSyncEngine(): () => void {
   if (!isBrowser()) return () => {};
+
   const onOnline = () => void flushQueue();
   window.addEventListener("online", onOnline);
   window.addEventListener("focus", onOnline);
-  const interval = window.setInterval(onOnline, 20000);
+  const interval = window.setInterval(onOnline, 15000);
+
   void flushQueue();
+
   return () => {
     window.removeEventListener("online", onOnline);
     window.removeEventListener("focus", onOnline);

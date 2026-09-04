@@ -1,9 +1,9 @@
 # SDD — System Design Document & Arquitetura de Software: PetPrev
 
 **Produto:** PetPrev — Saúde Preventiva Domiciliar  
-**Versão:** 3.0 (Especificação Técnica Produção Ultra-Auditada & Rastreável)  
+**Versão:** 3.1 (Especificação Técnica — MVP Funcional em Desenvolvimento)  
 **Documento Relacionado:** [`PDD_PRD_PetPrev.md`](file:///c:/Users/alexl/OneDrive/Documentos/Petprev/PDD_PRD_PetPrev.md)  
-**Status:** **PRODUÇÃO PRONTA & ULTRA-AUDITADA (100% Rastreável)**  
+**Status:** **MVP FUNCIONAL EM DESENVOLVIMENTO — Fase 1**  
 **Autor:** Antigravity AI & Engenharia PetPrev
 
 ---
@@ -16,8 +16,8 @@ O sistema **PetPrev** é um **Monólito Modular orientado a Eventos em NestJS**,
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                   CLIENTES (FRONTEND LAYER)                                      │
 │  ┌───────────────────────────┐   ┌───────────────────────────┐   ┌───────────────────────────┐   │
-│  │   App Mobile Tutor        │   │   App Mobile Vet          │   │   Painel Web Admin (RT)   │   │
-│  │ (React Native / Offline)  │   │ (React Native / Offline)  │   │     (Next.js 14 / React)  │   │
+│  │   App Web / PWA Tutor     │   │   App Web / PWA Vet       │   │   Painel Web Admin (RT)   │   │
+│  │ (React 19 / TanStack PWA) │   │ (React 19 / Dexie Sync)   │   │ (React 19 / TanStack)     │   │
 │  └─────────────┬─────────────┘   └─────────────┬─────────────┘   └─────────────┬─────────────┘   │
 └────────────────┼───────────────────────────────┼───────────────────────────────┼─────────────────┘
                  │ (HTTPS / TLS 1.3)             │ (HTTPS / Sync Offline)        │ (HTTPS / REST)
@@ -30,7 +30,7 @@ O sistema **PetPrev** é um **Monólito Modular orientado a Eventos em NestJS**,
 │                                                ▼                                                 │
 │  ┌────────────────────────────────────────────────────────────────────────────────────────────┐  │
 │  │ BACKEND CONTAINER (NESTJS / TYPESCRIPT MONOLITH)                                           │  │
-│  │ - Auth OTP & Token Rotation               - Logistics Engine (Uber H3 Index & DBSCAN)      │  │
+│  │ - Auth OTP & Token Rotation               - Logistics (Uber H3 Index / Triagem Manual MVP) │  │
 │  │ - Protocol Version Engine & Cold Chain    - Asaas Billing & Batch PIX Payout Engine        │  │
 │  └───────────────────┬─────────────────────────┬─────────────────────────┬────────────────────┘  │
 │                      │                         │                         │                       │
@@ -39,12 +39,21 @@ O sistema **PetPrev** é um **Monólito Modular orientado a Eventos em NestJS**,
 │  │ DATABASE CONTAINER           │ │ QUEUE & CACHE CONTAINER   │ │ LOCAL STORAGE (MINIO S3)    │  │
 │  │ PostgreSQL 16 + PostGIS      │ │ Redis 7 + BullMQ          │ │ MinIO S3-Compatible Storage │  │
 │  │ - Trigger Imutável (CFMV)    │ │ - WhatsApp Evolution API  │ │ - Fotos de Termômetros      │  │
-│  │ - Assinatura ECDSA + Audit   │ │ - LiveKit WebRTC (Vídeo)  │ │ - Evidências Aceite Tutor   │  │
+│  │ - Assinatura ECDSA + Audit   │ │ - LiveKit (Adiado v2/Ext) │ │ - Evidências Aceite Tutor   │  │
 │  └──────────────────────────────┘ └───────────────────────────┘ └─────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 1.1 Roadmap de Evolução de Disponibilidade (RPO & RTO)
+## 1.1 Estrutura do Monorepo Frontend & Pacotes Compartilhados
+
+Para erradicar a duplicação de componentes shadcn/ui e utilitários de infraestrutura entre o painel administrativo (`frontend-web`) e o aplicativo mobile/tutor/vet (`frontend-mobile`), o projeto adota uma arquitetura de monorepo via **npm workspaces**:
+
+- **`packages/ui` (`@petprev/ui`)**: Centraliza os 46 componentes base de interface (shadcn/ui, formulários, botões, modais, etc.), garantindo consistência visual e manutenibilidade única.
+- **`packages/utils` (`@petprev/utils`)**: Centraliza helpers de estilização (`cn()`), tratamento e captura de erros SSR (`describeError`) e funções utilitárias compartilhadas.
+- **`frontend-web`**: Aplicação voltada à gestão, RT e operação, consumindo `@petprev/ui` e `@petprev/utils`.
+- **`frontend-mobile`**: PWA responsivo com offline-first (Dexie/IndexedDB e Service Worker), consumindo os mesmos componentes e utilitários centralizados.
+
+## 1.2 Roadmap de Evolução de Disponibilidade (RPO & RTO)
 
 | Fase do Projeto | Arquitetura de Infraestrutura | Target RTO (Tempo de Recuperação) | Target RPO (Perda Max. de Dados) |
 | :--- | :--- | :---: | :---: |
@@ -450,29 +459,29 @@ echo "Backup Completo (Banco + MinIO) concluído em $TIMESTAMP!"
 
 ---
 
-# 8. Matriz de Rastreabilidade Requisitos PDD ➔ Componentes SDD
+# 8. Matriz de Rastreabilidade Requisitos PDD ➔ Componentes SDD (Status Real do MVP)
 
-A tabela abaixo garante que **100% dos Requisitos Funcionais do PDD estão contemplados no SDD**:
+A tabela abaixo detalha a situação real de implementação de cada requisito funcional no estágio atual do projeto (MVP Fase 1):
 
-| Requisito PDD | Descrição do Requisito | Componente Backend SDD | Tabela PostgreSQL | Status |
-| :--- | :--- | :--- | :--- | :---: |
-| **RF01** | Cadastro e Login OTP de Tutores | AuthModule | `users`, `user_sessions` | ✅ |
-| **RF02** | Cadastro de Múltiplos Pets | TutorsModule | `pets` | ✅ |
-| **RF03** | Assinaturas & Checkout Recorrente | SubscriptionsModule | `subscriptions` | ✅ |
-| **RF04** | Agendamento de Atendimento | AppointmentsModule | `appointments` | ✅ |
-| **RF05** | Motor Vacinal Clinico | VaccineEngine | `clinical_protocol_versions` | ✅ |
-| **RF06** | Trava Térmica (2°C a 8°C) | ColdChainValidator | `cold_chain_audits` | ✅ |
-| **RF07** | Prontuário Imutável (CFMV) | MedicalRecordModule | `medical_records` (Trigger SQL) | ✅ |
-| **RF08** | Assinatura Vet & Aceite Tutor | DigitalSignatureService | `medical_records` (ECDSA + Consent) | ✅ |
-| **RF09** | Notificações WhatsApp API | WhatsAppModule | `whatsapp_outbox` | ✅ |
-| **RF10** | Roteamento Hexagonal H3 | LogisticsModule | `tutors(h3_index)`, `appointments` | ✅ |
-| **RF11** | Credenciamento & Aprovação RT | VetsModule | `veterinarians` | ✅ |
-| **RF12** | Teleorientação por Vídeo | TeleorientationModule | `teleorientation_sessions` (LiveKit) | ✅ |
-| **RF13** | Repasse Financeiro & PIX Batch | PayoutModule | `vet_payouts` | ✅ |
-| **RF14** | Modo Offline Mobile App | SyncModule (SQLite) | Sync Idempotente + Append-Only | ✅ |
-| **RF15** | Matriz de Permissões RBAC | RBACGuard | `users(role)` | ✅ |
-| **RF16** | Auditoria e Traceabilidade | AuditModule | `audit_logs` | ✅ |
+| Requisito PDD | Descrição do Requisito | Componente Backend SDD | Tabela PostgreSQL | Status Real | Detalhamento / Observações |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **RF01** | Cadastro e Login OTP de Tutores | AuthModule | `users`, `user_sessions` | 🟡 Parcial | Autenticação OTP e geração de JWT implementadas; envio de SMS/WhatsApp em simulação/log. |
+| **RF02** | Cadastro de Múltiplos Pets | TutorsModule | `pets` | ✅ Implementado | CRUD completo vinculado ao tutor autenticado. |
+| **RF03** | Assinaturas & Checkout Recorrente | BillingModule | `subscriptions` | ✅ Implementado | Integração de assinaturas e webhooks Asaas autenticados via timingSafeEqual. |
+| **RF04** | Agendamento de Atendimento | AppointmentsModule | `appointments` | ✅ Implementado | Ciclo completo de status (Requested, Route Assigned, En Route, In Progress, Completed). |
+| **RF05** | Motor Vacinal Clínico | VaccineEngine | `clinical_protocol_versions` | ✅ Implementado | Lógica determinística por espécie/idade com cobertura de testes unitários. |
+| **RF06** | Trava Térmica (2°C a 8°C) | ColdChainValidator | `cold_chain_audits` | 🟡 Parcial | Validação de faixa de temperatura e foto de display implementadas; geolocalização com coordenadas fixas. |
+| **RF07** | Prontuário Imutável (CFMV) | MedicalRecordModule | `medical_records` (Trigger SQL) | ✅ Implementado | Imutabilidade via trigger de banco e proteção estrita contra IDOR implementada. |
+| **RF08** | Assinatura Vet & Aceite Tutor | DigitalSignatureService | `medical_records` (ECDSA + Consent) | ✅ Implementado | Validação criptográfica ECDSA em produção e descarte de URLs fictícias no MinIO. |
+| **RF09** | Notificações WhatsApp API | CommunicationsModule | `whatsapp_outbox` | 🔴 Não integrado | Fila BullMQ e consumers criados; aguardando integração e credenciais da Evolution API. |
+| **RF10** | Roteamento Hexagonal H3 | LogisticsModule | `tutors(h3_index)`, `appointments` | 🟡 Parcial | Indexação espacial H3 res 8 de tutores ativa; alocação manual por bairro/CEP no MVP; DBSCAN adiado para v2. |
+| **RF11** | Credenciamento & Aprovação RT | VetsModule | `veterinarians` | ✅ Implementado | Cadastro com CRMV e aprovação administrativa implementados. |
+| **RF12** | Teleorientação por Vídeo | TeleorientationModule | `teleorientation_sessions` | 🔴 Adiado v2 | Infraestrutura LiveKit WebRTC adiada para Fase 2; links externos (WhatsApp/Meet) no MVP. |
+| **RF13** | Repasse Financeiro & PIX Batch | BillingModule | `vet_payouts` | ✅ Implementado | Cálculo de split e motor de repasses aos veterinários com testes automatizados. |
+| **RF14** | Modo Offline Mobile App | SyncModule (IndexedDB) | Sync Idempotente + Append-Only | ✅ Implementado | Fila offline via Dexie.js (IndexedDB), Service Worker PWA com timeout e retentativa em HTTP 502. |
+| **RF15** | Matriz de Permissões RBAC | RBACGuard | `users(role)` | ✅ Implementado | RBACGuard e perfis TUTOR, VET_FIELD, VET_RESPONSAVEL_TECNICO e ADMIN_GERAL ativos. |
+| **RF16** | Auditoria e Traceabilidade | AuditModule | `audit_logs` | ✅ Implementado | Gravação de trilha de auditoria para operações sensíveis e alterações de estado. |
 
 ---
 
-> **Status Final:** O documento SDD v3.0 está **100% ULTRA-AUDITADO, RASTREÁVEL E PRONTO PARA EXECUÇÃO DE CÓDIGO**.
+> **Status Final:** O documento SDD v3.1 reflete com precisão técnica a arquitetura real do **MVP Fase 1**, separando claramente as capacidades operacionais prontas dos itens planejados para fases posteriores.

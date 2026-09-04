@@ -15,6 +15,12 @@ import { TutorsModule } from './modules/tutors/tutors.module';
 import { DevModule } from './modules/dev/dev.module';
 import { BullModule } from '@nestjs/bullmq';
 
+import { validateEnvironment } from './config/env.validation';
+import * as client from 'prom-client';
+
+// Coleta métricas padrão do Node.js / V8 (processo, heap, event loop, GC)
+client.collectDefaultMetrics({ prefix: 'petprev_' });
+
 @Controller()
 export class AppController {
   @Get('healthz')
@@ -28,8 +34,8 @@ export class AppController {
   }
 
   @Get('metrics')
-  getMetrics() {
-    return '# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.\n# TYPE process_cpu_seconds_total counter\nprocess_cpu_seconds_total 0.1\n';
+  async getMetrics() {
+    return await client.register.metrics();
   }
 }
 
@@ -37,6 +43,7 @@ export class AppController {
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnvironment,
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -60,9 +67,9 @@ export class AppController {
     CommunicationsModule,
     PetsModule,
     TutorsModule,
-    DevModule,
+    ...(process.env.NODE_ENV !== 'production' ? [DevModule] : []),
   ],
   controllers: [AppController],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

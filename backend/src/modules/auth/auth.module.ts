@@ -15,9 +15,7 @@ import { RedisModule } from '../redis/redis.module';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: () => ({
-        secret:
-          process.env.JWT_ACCESS_SECRET ||
-          'petprev_access_token_jwt_secret_key_change_me_in_prod_min_32_chars',
+        secret: process.env.JWT_ACCESS_SECRET!,
         signOptions: {
           expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
         },

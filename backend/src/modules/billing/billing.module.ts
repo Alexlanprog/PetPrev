@@ -9,6 +9,8 @@ import { AppointmentEntity } from '../../database/entities/appointment.entity';
 import { VetPayoutEntity } from '../../database/entities/vet-payout.entity';
 import { TutorEntity } from '../../database/entities/tutor.entity';
 
+import { AsaasWebhookGuard } from './guards/asaas-webhook.guard';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -20,7 +22,7 @@ import { TutorEntity } from '../../database/entities/tutor.entity';
     ]),
   ],
   controllers: [BillingController],
-  providers: [SubscriptionsService, VetPayoutEngineService],
-  exports: [SubscriptionsService, VetPayoutEngineService],
+  providers: [SubscriptionsService, VetPayoutEngineService, AsaasWebhookGuard],
+  exports: [SubscriptionsService, VetPayoutEngineService, AsaasWebhookGuard],
 })
 export class BillingModule {}

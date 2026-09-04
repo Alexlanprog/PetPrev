@@ -80,4 +80,31 @@ describe('TeleorientationService', () => {
     await expect(service.generateRoomToken('app-1', 'tutor-123', false))
       .rejects.toThrow(InternalServerErrorException);
   });
+
+  it('deve retornar acesso via LiveKit quando chaves de API estiverem presentes', async () => {
+    mockAppointmentRepository.findOne.mockResolvedValue({
+      id: 'app-1',
+      status: AppointmentStatus.REQUESTED,
+    });
+    mockTeleorientationRepository.findOne.mockResolvedValue(null);
+    mockTeleorientationRepository.create.mockImplementation((dto) => dto);
+
+    const access = await service.getRoomAccess('app-1', 'vet-123', true);
+    expect(access.provider).toBe('livekit');
+    expect(access.token).toBeDefined();
+    expect(access.roomName).toBe('room_appt_app-1');
+  });
+
+  it('deve recorrer ao provedor mvp_fallback quando credenciais do LiveKit estiverem ausentes', async () => {
+    mockConfigService.get.mockReturnValue(null); // Sem credenciais
+    mockAppointmentRepository.findOne.mockResolvedValue({
+      id: 'app-2',
+      status: AppointmentStatus.REQUESTED,
+    });
+
+    const access = await service.getRoomAccess('app-2', 'tutor-456', false);
+    expect(access.provider).toBe('mvp_fallback');
+    expect(access.token).toBeNull();
+    expect(access.meetingUrl).toContain('meet.jit.si/petprev_room_appt_app-2');
+  });
 });

@@ -29,7 +29,7 @@ export class AuthService {
     private readonly sessionRepository: Repository<UserSessionEntity>,
     private readonly redisService: RedisService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
@@ -211,9 +211,7 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
-      secret:
-        process.env.JWT_ACCESS_SECRET ||
-        'petprev_access_token_jwt_secret_key_change_me_in_prod_min_32_chars',
+      secret: process.env.JWT_ACCESS_SECRET,
       expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
     });
 

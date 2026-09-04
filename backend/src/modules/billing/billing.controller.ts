@@ -7,6 +7,8 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../database/enums';
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 
+import { AsaasWebhookGuard } from './guards/asaas-webhook.guard';
+
 @Controller('billing')
 export class BillingController {
   constructor(
@@ -39,6 +41,7 @@ export class BillingController {
    * Recebe webhooks do Asaas para gerenciar o ciclo de vida da assinatura.
    */
   @Post('webhooks/gateway')
+  @UseGuards(AsaasWebhookGuard)
   @HttpCode(HttpStatus.OK)
   async handleGatewayWebhook(@Body() payload: AsaasWebhookPayload) {
     await this.subscriptionsService.processWebhook(payload);
