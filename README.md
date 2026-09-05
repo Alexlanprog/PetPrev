@@ -166,13 +166,20 @@ Acesse a aplicação no navegador: **`http://localhost:5174`**
 > No Google Chrome ou Microsoft Edge, pressione `F12` e clique no ícone de smartphone (**Toggle Device Toolbar** ou `Ctrl + Shift + M`) para simular a tela de um iPhone ou Android.
 
 **Telas disponíveis no App:**
-- `/` — Fluxo de atendimento do veterinário em campo.
+- `/login` — Tela de autenticação unificada (Telefone + código OTP, com proteção de rotas e atalhos de demonstração).
+- `/` — Fluxo de atendimento do veterinário em campo (área protegida para Veterinário).
 - `/caixa-termica` — Controle de temperatura da caixa biológica de vacinas.
 - `/prontuario` — Registro de exame físico, aplicação de vacinas e assinatura.
-- `/tutor` — Hub principal do tutor.
+- `/tutor` — Hub principal do tutor (área protegida para Tutor).
 - `/tutor/pets` — Carteira de vacinação e cadastro dos pets.
 - `/tutor/agenda` — Solicitação e agendamento de consultas domiciliares.
 - `/tutor/assinatura` — Gerenciamento do plano de assinatura e cobrança.
+
+> ⚡ **Atalho Monorepo (a partir da raiz):**  
+> Se preferir rodar sem trocar de diretório, execute direto da raiz:
+> - `npm run dev:web` — Inicia o Painel Web na porta 5173
+> - `npm run dev:mobile` — Inicia o App Mobile na porta 5174
+> - `npm run build:all` — Compila ambos os projetos
 
 ---
 
@@ -181,7 +188,7 @@ Acesse a aplicação no navegador: **`http://localhost:5174`**
 | Serviço | URL Local | Descrição |
 | :--- | :--- | :--- |
 | **Admin Web (Dashboard)** | `http://localhost:5173` | Painel de controle do RT e administradores |
-| **Mobile App (Tutor & Vet)** | `http://localhost:5174` | Web/PWA responsivo para tutores e veterinários |
+| **Mobile App (Tutor & Vet)** | `http://localhost:5174` | Web/PWA responsivo para tutores e veterinários (redireciona para `/login`) |
 | **API Backend (NestJS)** | `http://localhost:3000/api/v1` | API REST e regras de negócio |
 | **MinIO Console (Storage)** | `http://localhost:9001` | Painel de controle de arquivos/S3 local |
 | **MinIO API (Storage)** | `http://localhost:9000` | Endpoint de upload de imagens e exames |
@@ -190,7 +197,20 @@ Acesse a aplicação no navegador: **`http://localhost:5174`**
 
 ---
 
-## 🔑 Contas de Teste (Seeds)
+## 🔑 Contas de Teste e Acesso à Demonstração
+
+### 📱 Login no Aplicativo Mobile (`http://localhost:5174/login`)
+O aplicativo conta com fluxo de autenticação por **Telefone + OTP**. Para testes e homologação rápida, utilize as contas demonstrativas abaixo (ou os botões de **Acesso Rápido** na tela de login):
+
+| Perfil | Telefone | Código OTP (Demo) | Roteamento Automático |
+| :--- | :--- | :--- | :--- |
+| **Tutora (Ana Ribeiro)** | `(71) 9 0000-0002` | `123456` | Redireciona para `/tutor` (carteira de pets, agenda, assinatura) |
+| **Veterinário (Dr. Caio Menezes)** | `(71) 9 0000-0003` | `123456` | Redireciona para `/` (atendimento de campo, caixa térmica, prontuário) |
+
+> 💡 **Alternador Rápido de Perfis (DevRoleSwitcher):**  
+> Ambas as aplicações contam com um widget flutuante no canto inferior direito (**Modo de Apresentação**) que permite alternar papéis instantaneamente com 1 clique entre **Tutor**, **Vet Campo** e **RT / Admin** (este último redireciona automaticamente para o painel Web).
+
+### 🖥️ Contas de Teste do Backend (Seeds)
 
 O banco de dados de desenvolvimento possui registros iniciais pré-configurados em `database/seeds/001_initial_seed.sql`:
 
@@ -198,8 +218,8 @@ O banco de dados de desenvolvimento possui registros iniciais pré-configurados 
 | :--- | :--- | :--- | :--- |
 | **Administrador Geral** | `admin@petprev.com.br` | `+5511999990001` | Gestão de clínicas, rotas e financeiro |
 | **Responsável Técnico (RT)** | `rt.veterinario@petprev.com.br` | `+5511999990002` | Auditoria de prontuários e aprovação de protocolos |
-| **Veterinário de Campo** | *Criado via onboarding* | — | Acesso à caixa térmica, rotas e prontuário |
-| **Tutor** | *Criado via app* | — | Gestão de pets, vacinas e assinatura |
+| **Veterinário de Campo** | `vet.caio@petprev.com.br` | `+5571900000003` | Acesso à caixa térmica, rotas e prontuário |
+| **Tutor** | `tutor.ana@petprev.com.br` | `+5571900000002` | Gestão de pets, vacinas e assinatura |
 
 ---
 
@@ -213,7 +233,10 @@ Petprev/
 ├── frontend-web/             # Painel Web Admin (React 19 + TanStack Start + Tailwind CSS v4)
 │   └── src/routes/           # Rotas: index, mapa, auditoria
 ├── frontend-mobile/          # App Mobile Tutor & Vet (React 19 + TanStack Start + Radix UI)
-│   └── src/routes/           # Rotas: tutor, agenda, pets, prontuario, caixa-termica
+│   └── src/routes/           # Rotas: login, tutor, agenda, pets, prontuario, caixa-termica
+├── packages/                 # Pacotes compartilhados do Monorepo
+│   ├── ui/                   # Design System e biblioteca de componentes (@petprev/ui)
+│   └── utils/                # Utilitários, formatações e tratamento de erros (@petprev/utils)
 ├── database/                 # Estrutura do PostgreSQL
 │   ├── migrations/           # DDLs e triggers de imutabilidade de prontuário
 │   └── seeds/                # Carga inicial de protocolos clínicos e usuários
@@ -255,3 +278,4 @@ Para entender em profundidade o modelo de negócio, a arquitetura modular e os r
 <p align="center">
   Desenvolvido com 💚 para transformar a saúde preventiva de cães e gatos.
 </p>
+
