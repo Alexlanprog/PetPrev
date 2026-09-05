@@ -133,7 +133,13 @@ export function DevRoleSwitcher() {
             <button
               onClick={() => {
                 applyRole("rt");
-                window.location.href = "/tutor/prontuario";
+                const adminUrl =
+                  (typeof window !== "undefined" && (import.meta as any).env?.["VITE_ADMIN_URL"])
+                    ? (import.meta as any).env["VITE_ADMIN_URL"].replace(/\/$/, "")
+                    : (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
+                      ? "https://pet-prev-test.vercel.app"
+                      : "http://localhost:5173");
+                window.location.href = adminUrl;
               }}
               className={`flex flex-col items-center justify-center rounded-xl p-2 text-center text-xs font-medium transition-colors ${
                 activeRole === "rt"
@@ -142,7 +148,7 @@ export function DevRoleSwitcher() {
               }`}
             >
               <ShieldCheck className="size-4 mb-1" />
-              <span>RT / Audit</span>
+              <span>RT / Admin</span>
             </button>
           </div>
 
