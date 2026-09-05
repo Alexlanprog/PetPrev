@@ -22,7 +22,7 @@ export function AdminShell({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar px-4 py-6 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar px-4 py-6 md:flex overflow-y-auto">
         <div className="flex items-center gap-2 px-2">
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-5" />
@@ -43,7 +43,7 @@ export function AdminShell({
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/10 text-primary font-semibold"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
@@ -54,9 +54,11 @@ export function AdminShell({
           })}
         </nav>
 
-        <div className="mt-auto rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Dra. Helena Braga</p>
-          <p>Responsável Técnica · CRMV-BA 9182</p>
+        <div className="mt-auto pt-6">
+          <div className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Dra. Helena Braga</p>
+            <p>Responsável Técnica · CRMV-BA 9182</p>
+          </div>
         </div>
       </aside>
 
@@ -72,7 +74,7 @@ export function AdminShell({
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium",
                   pathname === item.to
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground font-semibold"
                     : "bg-muted text-muted-foreground",
                 )}
               >
@@ -81,7 +83,7 @@ export function AdminShell({
             ))}
           </nav>
         </header>
-        <main className="flex-1 px-6 py-6">{children}</main>
+        <main className="flex-1 px-6 py-6 pb-24">{children}</main>
       </div>
     </div>
   );

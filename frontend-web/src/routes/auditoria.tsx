@@ -50,16 +50,23 @@ const LIMITE_MIN = 2;
 const LIMITE_MAX = 8;
 
 function travaBadge(p: Prontuario) {
-  if (p.travaTermica === "violada") return <Badge variant="destructive">Trava violada</Badge>;
-  if (p.travaTermica === "alerta")
+  if (p.travaTermica === "violada") {
     return (
-      <Badge variant="outline" className="border-chart-5 text-chart-5">
-        Fora da faixa
+      <Badge variant="destructive" className="gap-1 shadow-sm">
+        <AlertTriangle className="size-3" /> Trava violada
       </Badge>
     );
+  }
+  if (p.travaTermica === "alerta") {
+    return (
+      <Badge variant="warning" className="gap-1">
+        <ThermometerSun className="size-3" /> Fora da faixa
+      </Badge>
+    );
+  }
   return (
-    <Badge variant="outline" className="border-chart-2 text-chart-2">
-      Conforme
+    <Badge variant="success" className="gap-1">
+      <Check className="size-3" /> Conforme
     </Badge>
   );
 }
@@ -130,14 +137,17 @@ function Auditoria() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Prontuários ({lista.length})</CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <Switch
                   id="conflito"
                   checked={somenteConflito}
                   onCheckedChange={setSomenteConflito}
                 />
-                <Label htmlFor="conflito" className="text-sm text-muted-foreground">
-                  Somente <code className="text-foreground">has_conflict</code>
+                <Label htmlFor="conflito" className="cursor-pointer text-sm font-medium text-foreground flex items-center gap-1.5 select-none">
+                  <span>Apenas com divergências</span>
+                  <Badge variant="destructive" className="h-5 px-1.5 text-[10px] font-bold">
+                    {prontuariosList.filter((p) => p.has_conflict).length}
+                  </Badge>
                 </Label>
               </div>
             </CardHeader>
@@ -159,7 +169,11 @@ function Auditoria() {
                     const decisao = decisoes[p.id] ?? p.status;
                     return (
                       <TableRow key={p.id}>
-                        <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-muted text-foreground border border-border/80 tracking-tight">
+                            {p.id}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <span className="font-medium">{p.pet}</span>
                           <span className="block text-xs text-muted-foreground">{p.tutor}</span>
@@ -179,22 +193,46 @@ function Auditoria() {
                         <TableCell>{travaBadge(p)}</TableCell>
                         <TableCell className="text-right">
                           {decisao === "pendente" ? (
-                            <div className="flex justify-end gap-2">
-                              <Button size="sm" onClick={() => decidir(p.id, "aprovado")}>
-                                <Check className="size-4" /> Aprovar
+                            <div className="flex justify-end gap-1.5">
+                              <Button size="sm" className="h-8 gap-1" onClick={() => decidir(p.id, "aprovado")}>
+                                <Check className="size-3.5" /> Aprovar
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
+                                className="h-8 gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
                                 onClick={() => decidir(p.id, "reprovado")}
                               >
-                                <X className="size-4" /> Devolver
+                                <X className="size-3.5" /> Devolver
                               </Button>
                             </div>
                           ) : (
-                            <Badge variant={decisao === "aprovado" ? "secondary" : "destructive"}>
-                              {decisao === "aprovado" ? "Aprovado" : "Devolvido"}
-                            </Badge>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {decisao === "aprovado" ? (
+                                <Badge variant="success" className="gap-1">
+                                  <Check className="size-3" /> Aprovado
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive" className="gap-1">
+                                  <X className="size-3" /> Devolvido
+                                </Badge>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  setDecisoes((d) => {
+                                    const next = { ...d };
+                                    delete next[p.id];
+                                    return next;
+                                  });
+                                  toast.info(`Auditoria de ${p.id} reaberta`);
+                                }}
+                              >
+                                Reabrir
+                              </Button>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -265,7 +303,15 @@ function Auditoria() {
                         {proto.id} · {proto.versao} · {proto.escopo}
                       </p>
                     </div>
-                    <Badge variant={decisao === "pendente" ? "outline" : "secondary"}>
+                    <Badge
+                      variant={
+                        decisao === "pendente"
+                          ? "warning"
+                          : decisao === "aprovado"
+                            ? "success"
+                            : "destructive"
+                      }
+                    >
                       {decisao === "pendente"
                         ? "Aguardando RT"
                         : decisao === "aprovado"
@@ -286,7 +332,7 @@ function Auditoria() {
                       Submetido por {proto.autor} em{" "}
                       {new Date(proto.atualizado).toLocaleDateString("pt-BR")}
                     </p>
-                    {decisao === "pendente" && (
+                    {decisao === "pendente" ? (
                       <div className="mt-4 flex gap-2">
                         <Button size="sm" onClick={() => decidir(proto.id, "aprovado")}>
                           Aprovar versão
@@ -297,6 +343,25 @@ function Auditoria() {
                           onClick={() => decidir(proto.id, "reprovado")}
                         >
                           Solicitar ajustes
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+                        <span className="text-xs text-muted-foreground">Parecer registrado</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            setDecisoes((d) => {
+                              const next = { ...d };
+                              delete next[proto.id];
+                              return next;
+                            });
+                            toast.info(`Parecer de ${proto.id} reaberto`);
+                          }}
+                        >
+                          Alterar parecer
                         </Button>
                       </div>
                     )}

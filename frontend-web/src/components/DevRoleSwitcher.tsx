@@ -87,8 +87,8 @@ export function DevRoleSwitcher() {
           onClick={() => setOpen(true)}
           className="flex items-center gap-2 rounded-full border border-primary/30 bg-card/95 px-3.5 py-2 text-xs font-semibold text-foreground shadow-lg backdrop-blur hover:bg-accent"
         >
-          <span className="size-2 rounded-full bg-success animate-pulse" />
-          <span>Demo: {activeRole === "rt" ? "🛡️ RT / Auditoria" : activeRole === "tutor" ? "👤 Tutor" : "🩺 Vet"}</span>
+          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Painel Admin (RT)</span>
           <ChevronUp className="size-3 text-muted-foreground" />
         </button>
       ) : (
