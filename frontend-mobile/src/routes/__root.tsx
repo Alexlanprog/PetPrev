@@ -7,12 +7,61 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Toaster } from "@petprev/ui";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "@petprev/utils";
 import { DevRoleSwitcher } from "@/components/DevRoleSwitcher";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+
+function AuthGuard({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
+
+  // Rotas restritas no mobile
+  const isTutorRoute = pathname.startsWith("/tutor");
+  const isVetRoute = !isTutorRoute && pathname !== "/login";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    if (!isAuthenticated && pathname !== "/login") {
+      router.navigate({ to: "/login", replace: true });
+      return;
+    }
+
+    if (isAuthenticated && pathname === "/login") {
+      const home = user?.role === "tutor" ? "/tutor" : "/";
+      router.navigate({ to: home, replace: true });
+      return;
+    }
+
+    if (isAuthenticated && isVetRoute && user?.role === "tutor") {
+      router.navigate({ to: "/tutor", replace: true });
+      return;
+    }
+
+    if (isAuthenticated && isTutorRoute && user?.role === "vet") {
+      router.navigate({ to: "/", replace: true });
+      return;
+    }
+  }, [mounted, isAuthenticated, pathname, router, user, isVetRoute, isTutorRoute]);
+
+  if (!mounted) return <>{children}</>;
+
+  if (!isAuthenticated && pathname !== "/login") return null;
+  if (isAuthenticated && isVetRoute && user?.role === "tutor") return null;
+  if (isAuthenticated && isTutorRoute && user?.role !== "tutor") return null;
+
+  return <>{children}</>;
+}
 
 function NotFoundComponent() {
   return (
@@ -139,9 +188,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <DevRoleSwitcher />
-      <Toaster position="top-center" />
+      <AuthProvider>
+        <AuthGuard>
+          <Outlet />
+          <DevRoleSwitcher />
+          <Toaster position="top-center" />
+        </AuthGuard>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
