@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CaixaTermicaRouteImport } from './routes/caixa-termica'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProntuarioRouteImport } from './routes/prontuario'
 import { Route as TutorRouteImport } from './routes/tutor'
 import { Route as TutorIndexRouteImport } from './routes/tutor.index'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const CaixaTermicaRoute = CaixaTermicaRouteImport.update({
   id: '/caixa-termica',
   path: '/caixa-termica',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProntuarioRoute = ProntuarioRouteImport.update({
@@ -68,6 +74,7 @@ const TutorProntuarioRoute = TutorProntuarioRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/caixa-termica': typeof CaixaTermicaRoute
+  '/login': typeof LoginRoute
   '/prontuario': typeof ProntuarioRoute
   '/tutor': typeof TutorRouteWithChildren
   '/tutor/agenda': typeof TutorAgendaRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/caixa-termica': typeof CaixaTermicaRoute
+  '/login': typeof LoginRoute
   '/prontuario': typeof ProntuarioRoute
   '/tutor/agenda': typeof TutorAgendaRoute
   '/tutor/assinatura': typeof TutorAssinaturaRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/caixa-termica': typeof CaixaTermicaRoute
+  '/login': typeof LoginRoute
   '/prontuario': typeof ProntuarioRoute
   '/tutor': typeof TutorRouteWithChildren
   '/tutor/agenda': typeof TutorAgendaRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/caixa-termica'
+    | '/login'
     | '/prontuario'
     | '/tutor'
     | '/tutor/agenda'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/caixa-termica'
+    | '/login'
     | '/prontuario'
     | '/tutor/agenda'
     | '/tutor/assinatura'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/caixa-termica'
+    | '/login'
     | '/prontuario'
     | '/tutor'
     | '/tutor/agenda'
@@ -136,6 +148,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CaixaTermicaRoute: typeof CaixaTermicaRoute
+  LoginRoute: typeof LoginRoute
   ProntuarioRoute: typeof ProntuarioRoute
   TutorRoute: typeof TutorRouteWithChildren
 }
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/caixa-termica'
       fullPath: '/caixa-termica'
       preLoaderRoute: typeof CaixaTermicaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/prontuario': {
@@ -229,6 +249,7 @@ const TutorRouteWithChildren = TutorRoute._addFileChildren(TutorRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CaixaTermicaRoute: CaixaTermicaRoute,
+  LoginRoute: LoginRoute,
   ProntuarioRoute: ProntuarioRoute,
   TutorRoute: TutorRouteWithChildren,
 }
